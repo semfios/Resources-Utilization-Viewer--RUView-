@@ -4,7 +4,7 @@
 		'dayWidth' => 3,
 		'resourceHeight' => 40,
 		'left' => 150,
-		'top' => 50,
+		'top' => 90,
 		'resourceSeparator' => 2,
 		'colors' => array(
 			'BurlyWood', 'DarkBlue', 'DarkOrange', 'DarkCyan', 'Aqua', 'Beige', 'Chartreuse', 'Coral', 'DarkKhaki', 'DarkViolet', 'DodgerBlue', 'Gainsboro', 'Gold', 'GreenYellow', 'LightSalmon', 'Olive', 'PaleTurquoise', 'SlateGrey'
@@ -55,6 +55,24 @@
 	
 	$t2=microtime(true);
 	
+	
+	
+	/*******************************************************
+				View code begins below
+	*******************************************************/
+	
+	include("$d/header.php");
+	
+	// Years navigator
+	$prevYear = $year - 1;
+	$nextYear = $year + 1;
+	?>
+	<div id="years-nav">
+		<a href="chart.php?year=<?php echo $prevYear; ?>"><?php echo $prevYear; ?></a>
+		<?php echo $year; ?>
+		<a href="chart.php?year=<?php echo $nextYear; ?>"><?php echo $nextYear; ?></a>
+	</div>
+	<?
 	
 	// Display month grid lines
 	$prevLeft = $chart['left'];
@@ -143,4 +161,5 @@
 		</div>
 		<?
 	}
-	
+
+	include("$d/footer.php");
