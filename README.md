@@ -14,8 +14,8 @@ each team member. RUView helps visualize all the resource utilization data in on
 simple chart that instantly shows you who's working on what and when.
 
 Here is a sample utilization chart for an imaginary company:
-[Resource utilization chart](images/RUView-resources-utilization-chart.png)
-[Hints you can tell from the chart](images/RUView-chart-explained.png)
+[Resource utilization chart](http://bigprof.com/appgini/sites/default/files/RUView-resources-utilization-chart.png)
+[Hints you can tell from the chart](http://bigprof.com/appgini/sites/default/files/RUView-chart-explained_2.png)
 
 License
 -------
@@ -46,11 +46,14 @@ up user groups and permissions.
 
 Working with RUView
 -------------------
-* Define your resources (team, equipment, ... etc). [Screenshot](RUView-list-of-resources.png)
-* Define your projects. [Screenshot](images/RUView-managing-projects.png)
-* Assign resources to projects. [Screenshot](images/RUView-list-of-resources.png)
+* Define your resources (team, equipment, ... etc). 
+	[Screenshot](http://bigprof.com/appgini/sites/default/files/RUView-list-of-resources.png)
+* Define your projects. 
+	[Screenshot](http://bigprof.com/appgini/sites/default/files/RUView-managing-projects.png)
+* Assign resources to projects. 
+	[Screenshot](http://bigprof.com/appgini/sites/default/files/RUView-assigning-resources-to-projects.png)
 * Open the chart to visualize how resources are utilized accross projects.
-	[Screenshot](images/RUView-resources-utilization-chart)
+	[Screenshot](http://bigprof.com/appgini/sites/default/files/RUView-resources-utilization-chart.png)
 
 About RUView
 ------------
