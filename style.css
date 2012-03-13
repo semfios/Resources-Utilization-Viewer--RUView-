@@ -1,0 +1,394 @@
+.TableTitle{
+	font-family: verdana,arial,tahoma;
+	font-size: 22px;
+	font-weight: normal;
+	text-indent: 5px;
+	color: #316B40;
+	text-decoration: none;
+	text-align: left;
+}
+
+.TableHeader{
+	font-family: verdana,arial,tahoma;
+	font-size: 12px;
+	font-weight: bold;
+	background-color: #E9E5D9;
+	text-indent: 3px;
+	padding-right: 3px;
+	color: black;
+	text-decoration: none;
+}
+
+.TableHeader:hover{
+	color: red;
+}
+
+.TableBody{
+	font-family: verdana,arial,tahoma;
+	font-size: 12px;
+	color: black;
+	background-color: #F7F7EF;
+	padding-left: 3px;
+	text-decoration: none;
+}
+
+.TableBody:hover{
+	color: red;
+}
+
+.TableBodyNumeric{
+	font-family: verdana,arial,tahoma;
+	font-size: 12px;
+	color: black;
+	background-color: #F7F7EF;
+	text-align: right;
+	padding-right: 3px;
+	text-decoration: none;
+}
+
+.TableBodyNumeric:hover{
+	color: red;
+}
+
+.TableFooter{
+	font-family: verdana,arial,tahoma;
+	font-weight: bold;
+	font-size: 12px;
+	background-color: #E9E5D9;
+	text-align: center;
+	padding: 3px;
+}
+
+.TableBodySelected{
+	font-family: verdana,arial,tahoma;
+	font-size: 12px;
+	color: black;
+	background-color: #FFFEF9;
+	padding-left: 3px;
+	text-decoration: none;
+}
+
+.TableBodySelectedNumeric{
+	font-family: verdana,arial,tahoma;
+	font-size: 12px;
+	color: black;
+	background-color: #FFFEF9;
+	text-align: right;
+	padding-right: 3px;
+	text-decoration: none;
+}
+
+.Error{
+	font-family: verdana,arial,tahoma;
+	font-size: 12px;
+	font-weight: bold;
+	background-color: yellow;
+	text-indent: 5px;
+	color: red;
+	text-decoration: none;
+	margin-bottom: 10px;
+}
+
+.TextBox{
+	font-family: verdana,arial,tahoma;
+	font-size: 12px;
+	border-style: solid;
+	border-width: 1px;
+	border-color: black;
+}
+
+.Option{
+	font-family: verdana,arial,tahoma;
+	font-size: 12px;
+}
+
+.SelectedOption{
+	font-family: verdana,arial,tahoma;
+	font-size: 12px;
+	color: blue;
+}
+
+.TableBodyHighlighted{
+	font-family: verdana,arial,tahoma;
+	font-size: 12px;
+	color: black;
+	background-color: #FFF0C2;
+	padding-left: 3px;
+	text-decoration: none;
+}
+
+.TableBodyHighlightedNumeric{
+	font-family: verdana,arial,tahoma;
+	font-size: 12px;
+	color: black;
+	background-color: #FFF0C2;
+	text-align: right;
+	padding-right: 3px;
+	text-decoration: none;
+}
+
+TD.TableBody{
+	border-bottom: solid 1px #CFCFCF;
+	border-right: solid 1px #CFCFCF;
+}
+
+TD.TableBodySelected{
+	border-bottom: solid 1px #CFCFCF;
+	border-right: solid 1px #CFCFCF;
+}
+
+TD.TableBodySelectedNumeric{
+	border-bottom: solid 1px #CFCFCF;
+	border-right: solid 1px #CFCFCF;
+}
+
+TD.TableBodyNumeric{
+	border-bottom: solid 1px #CFCFCF;
+	border-right: solid 1px #CFCFCF;
+}
+
+TD.TableHeader{
+	border-bottom: solid 1px #CFCFCF;
+	border-right: solid 1px #CFCFCF;
+	padding: 2px 0;
+}
+
+.fieldDescription{
+	font-family: verdana,arial,tahoma;
+	font-size: 13px;
+	line-height: 20px;
+	cursor: pointer;
+	visibility: hidden;
+	position: absolute;
+	width: 400px;
+	background-color: #FFFFA5;
+	background-image: url(Exit.gif);
+	background-position: 99% 3%;
+	background-repeat: no-repeat;
+	border: solid 3px white;
+	padding: 10px;
+	filter: Alpha(opacity=95);
+	-moz-opacity: 0.95;
+	-khtml-opacity: 0.95;
+	opacity: 0.95;
+}
+
+.SuccessNotify{
+	color: green;
+	border: solid 1px green;
+	background-color: #d9ffce;
+	text-align: center;
+	margin: 0 auto;
+	width: 500px;
+	padding: 3px 10px;
+	font-family: "Lucida Grande", Tahoma, Arial, Verdana, sans-serif;
+}
+
+.print-button{
+	cursor: pointer;
+	font-weight: bold;
+	margin: .5em .5em .5em .5em;
+	height: 3.5em;
+	width: 9em;
+	white-space: pre-wrap;
+	vertical-align: bottom;
+}
+
+#withSelected{
+	display: none;
+	background: url('print-bg.gif') no-repeat;
+	background-position: 0 0;
+	font-size: 3.5em;
+	padding-left: 1em;
+}
+
+.nicEdit-main{
+	background-color: white;
+}
+
+/* Detail view */
+#dvContainer{
+	margin: 10px auto;
+	border: 1px solid #E9E5D9;
+}
+
+#dvForm{
+}
+
+/* BUTTONS */
+
+.buttons a, .buttons button{
+	display: block;
+	float: left;
+	margin: 2px;
+	background-color: #ececf1;
+	border: 1px solid #9d9da1;
+	border-top: 1px solid #f1efe2;
+	border-left: 1px solid #f1efe2;
+
+	font-family: "Lucida Grande", Tahoma, Arial, Verdana, sans-serif;
+	font-size: 12px;
+	line-height: 130%;
+	text-decoration: none;
+	font-weight: bold;
+	color: #565656;
+	cursor: pointer;
+	padding: 5px 10px 6px 7px; /* Links */
+	-moz-border-radius: 6px;
+}
+.buttons button{
+	text-align: left;
+	width: 140px;
+	overflow: visible;
+	padding: 4px 10px 3px 7px; /* IE6 */
+}
+#topButtons.buttons button{
+	width: 130px;
+}
+.buttons button[type]{
+	padding: 5px 10px 5px 7px; /* Firefox */
+	line-height: 17px; /* Safari */
+}
+*:first-child+html button[type]{
+	padding: 4px 10px 3px 7px; /* IE7 */
+}
+.buttons button img, .buttons a img{
+	margin: 0 3px -3px 0 !important;
+	padding: 0;
+	border: none;
+	width: 16px;
+	height: 16px;
+}
+
+/* BUTTONS: STANDARD */
+
+button:hover, .buttons a:hover{
+	background-color: #dff4ff;
+	border: 1px solid #c2e1ef;
+	color: #336699;
+}
+.buttons a:active{
+	background-color: #6299c5;
+	border: 1px solid #6299c5;
+	color: #ffffff;
+}
+
+/* BUTTONS: POSITIVE */
+
+button.positive, .buttons a.positive{
+	color: #529214;
+}
+.buttons a.positive:hover, button.positive:hover{
+	background-color: #E6EFC2;
+	border: 1px solid #C6D880;
+	color: #529214;
+}
+.buttons a.positive:active{
+	background-color: #529214;
+	border: 1px solid #529214;
+	color: #ffffff;
+}
+
+/* BUTTONS: NEGATIVE */
+
+.buttons a.negative, button.negative{
+	color: #d12f19;
+}
+.buttons a.negative:hover, button.negative:hover{
+	background: #fbe3e4;
+	border: 1px solid #fbc2c4;
+	color: #d12f19;
+}
+.buttons a.negative:active{
+	background-color: #d12f19;
+	border: 1px solid #d12f19;
+	color: #ffffff;
+}
+
+
+.dv button{
+	clear: left;
+	margin-bottom: 2px;
+}
+
+/* Auto-complete drop down */
+div.AutoComplete{
+	position: absolute;
+	width: 250px;
+	background-color: white;
+	border: 1px solid #888;
+	margin: 0;
+	padding: 0;
+}
+div.AutoComplete ul{
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+div.AutoComplete ul li.selected{
+	background-color: #faedff;
+}
+div.AutoComplete ul li{
+	list-style-type: none;
+	display: block;
+	margin: 0;
+	padding: 2px;
+	cursor: pointer;
+	border-bottom: dotted 1px silver;
+}
+select.Lookup{ width: 300px; }
+
+/* Styles for login form */
+#login-form label{
+	display: block;
+	font-size: small;
+	font-family: Trebuchet MS,Garamond,Arial,Georgia;
+}
+#login-form h1{
+	font-family: Myriad Pro,Myriad Web Pro Regular,Lucida Grande,Geneva,Trebuchet MS,sans-serif;
+	margin: 0 0 5px 0;
+}
+#login-form h1 a{
+	float: right;
+	margin-top: 10px;
+	padding: 6px 25px;
+}
+#login-form input[type="text"]:focus, #login-form input[type="password"]:focus{
+	background-color: PapayaWhip;
+}
+#login-form input[type="text"], #login-form input[type="password"]{
+	font-family: "Helvetica Neue",Helvetica,Arial,Verdana,sans-serif;
+	background-color: #FBFBFB;
+	border: 2px solid black;
+	border-radius: 4px 4px 4px 4px;
+	font-size: 1.5em;
+	padding: 11px 5px 11px 8px;
+	width: 446px;
+	z-index: 2;
+	margin: 0 0 10px 0;
+}
+#login-form fieldset{
+	margin: 5px 0 0 0;
+	padding: 15px;
+	background-color: #E9E5D9;
+	border-radius: 8px;
+	border: solid 1px black;
+}
+#login-form #submit {
+	width: auto;
+	font-size: large;
+	padding: 18px 40px;
+}
+#login-form{
+	width: 497px;
+	float: right;
+	margin: 0 20px 20px 20px;
+	color: #316B40;
+}
+
+#login-splash{
+	float: left;
+	margin: 0 20px;
+}
+
+#login-footer{ margin: 20px 0; }

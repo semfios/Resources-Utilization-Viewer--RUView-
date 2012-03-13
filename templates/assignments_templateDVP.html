@@ -1,0 +1,82 @@
+<!-- Edit this file to change the layout of the detail view print preview page -->
+
+<style type="text/css"><!--  
+	@media print{.displayOnly {display: none;}}
+	td.TableHeaderPrint{
+		border-bottom: dotted 1px black;
+	}
+	.TableHeaderPrint{
+		font-weight: bold;
+	}
+	.TableTitlePrint{
+		font-size: 130%;
+		font-weight: bold;
+	}
+	.TableBodyPrint{
+		padding-left: .5em;
+		border-bottom: dotted 1px black;
+	}
+	*{
+		font-family: arial,sans-serif;
+	}
+	--></style><br />
+<table border="0" bordercolor="silver" cellpadding="2" cellspacing="0" width="100%">
+	<tr>
+		<td>
+			<div class=TableTitlePrint><%%DETAIL_VIEW_TITLE%%></div>
+			<div align="center" class="displayOnly buttons">
+				<button type="submit" id="back"><img src="deselect.gif" /> <%%TRANSLATION(Back)%%></button>
+				<button type="submit" id="deselect" name="deselect_x" value="1"><img src="deselect.gif" /> <%%TRANSLATION(Deselect)%%></button>
+				</div>
+			</td>
+		</tr>
+	<tr>
+		<td>
+			<table width="100%">
+				<tr>
+					<td class="TableHeaderPrint" valign="top" width="20%">
+						<div class="TableHeaderPrint" style="text-align: right;">ID</div>
+						</td>
+					<td class="TableBodyPrint" xwidth="300" valign="top"><%%VALUE(Id)%%>&nbsp;&nbsp;</td>
+					</tr>
+				<tr>
+					<td class="TableHeaderPrint" valign="top" width="20%">
+						<div class="TableHeaderPrint" style="text-align: right;">Project</div>
+						</td>
+					<td class="TableBodyPrint" xwidth="300" valign="top"><span id="ProjectId<%%RND1%%>"><%%COMBOTEXT(ProjectId)%%></span>&nbsp;&nbsp;</td>
+					</tr>
+				<tr>
+					<td class="TableHeaderPrint" valign="top" width="20%">
+						<div class="TableHeaderPrint" style="text-align: right;">Project Duration</div>
+						</td>
+					<td class="TableBodyPrint" xwidth="300" valign="top"><span id="ProjectDuration<%%RND1%%>"></span>&nbsp;&nbsp;</td>
+					</tr>
+				<tr>
+					<td class="TableHeaderPrint" valign="top" width="20%">
+						<div class="TableHeaderPrint" style="text-align: right;">Resource</div>
+						</td>
+					<td class="TableBodyPrint" xwidth="300" valign="top"><span id="ResourceId<%%RND1%%>"><%%COMBOTEXT(ResourceId)%%></span>&nbsp;&nbsp;</td>
+					</tr>
+				<tr>
+					<td class="TableHeaderPrint" valign="top" width="20%">
+						<div class="TableHeaderPrint" style="text-align: right;">Commitment</div>
+						</td>
+					<td class="TableBodyPrint" xwidth="300" valign="top"><%%COMBOTEXT(Commitment)%%>&nbsp;&nbsp;</td>
+					</tr>
+				<tr>
+					<td class="TableHeaderPrint" valign="top" width="20%">
+						<div class="TableHeaderPrint" style="text-align: right;">Start Date</div>
+						</td>
+					<td class="TableBodyPrint" xwidth="300" valign="top"><%%COMBOTEXT(StartDate)%%>&nbsp;&nbsp;</td>
+					</tr>
+				<tr>
+					<td class="TableHeaderPrint" valign="top" width="20%">
+						<div class="TableHeaderPrint" style="text-align: right;">End Date</div>
+						</td>
+					<td class="TableBodyPrint" xwidth="300" valign="top"><%%COMBOTEXT(EndDate)%%>&nbsp;&nbsp;</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+

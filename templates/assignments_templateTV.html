@@ -1,0 +1,12 @@
+<!-- Edit this file to change the layout of each record in the table view -->
+<!-- To disable clicking of a field, remove the <%%select%%> and <%%endselect%%> formatters around it-->
+
+<!-- If you wish to hide the table view header that contains the column titles, -->
+<!-- open the generated 'assignments_view.php' file in your text editor and -->
+<!-- change the value of $x->ShowTableHeader to 0 -->
+
+		<td id="assignments.ProjectId.<%%VALUE(Id)%%>" valign="top" width="150" class="TableBody"><%%SELECT%%><%%VALUE(ProjectId)%%><%%ENDSELECT%%></td>
+		<td id="assignments.ResourceId.<%%VALUE(Id)%%>" valign="top" width="150" class="TableBody"><%%SELECT%%><%%VALUE(ResourceId)%%><%%ENDSELECT%%></td>
+		<td id="assignments.Commitment.<%%VALUE(Id)%%>" valign="top" width="150" class="TableBodyNumeric"><%%SELECT%%><%%VALUE(Commitment)%%><%%ENDSELECT%%></td>
+		<td id="assignments.StartDate.<%%VALUE(Id)%%>" valign="top" width="150" class="TableBody"><%%SELECT%%><%%VALUE(StartDate)%%><%%ENDSELECT%%></td>
+		<td id="assignments.EndDate.<%%VALUE(Id)%%>" valign="top" width="150" class="TableBody"><%%SELECT%%><%%VALUE(EndDate)%%><%%ENDSELECT%%></td>

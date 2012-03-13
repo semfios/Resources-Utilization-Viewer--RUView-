@@ -1,0 +1,66 @@
+<!-- Edit this file to change the layout of the detail view form -->
+
+<style type="text/css"><!--  #noMouseOver:hover{ color: #000000; }  --></style>
+<table border="0" cellpadding="0" cellspacing="0" id="dvContainer">
+	<tr>
+		<td>
+			<div class=TableTitle><%%DETAIL_VIEW_TITLE%%></div>
+			</td>
+		</tr>
+	<tr>
+		<td class=TableHeader colspan=3 height=25>
+			<div class="buttons" style="float: right;">
+				<a href="assignments_view.php?FilterField[1]=4&FilterOperator[1]=%3C%3D%3E&FilterValue[1]=<%%URLVALUE(Name)%%>" style="visibility: hidden;" id="assignments_link">Assignments <img src="view.gif" /></a>
+				</div>
+			</td>
+		</tr>
+	<tr>
+		<td>
+			<table id="dvForm" cellspacing="1" cellpadding="0">
+				<tr>
+					<td colspan=2></td>
+					<td rowspan="6" valign="top"><div class="buttons dv">
+						<%%DVPRINT_BUTTON%%>
+						<%%UPDATE_BUTTON%%>
+						<%%DELETE_BUTTON%%>
+						<%%DESELECT_BUTTON%%>
+						<br />
+						<%%INSERT_BUTTON%%>
+						</div></td>
+					</tr>
+				<tr>
+					<td class=TableHeader valign=top>
+						<div class=TableHeader style="text-align:right;">ID</div>
+						</td>
+					<td class="TableBody" id="noMouseOver" valign="top"><%%VALUE(Id)%%>&nbsp;&nbsp;</td>
+					</tr>
+				<tr>
+					<td class=TableHeader valign=top>
+						<div class=TableHeader style="text-align:right;">Name</div>
+						</td>
+					<td class="TableBody" id="noMouseOver" valign="top"><input tabindex="1" maxlength="40" size="40" type="text" class="TextBox" name="Name" id="Name" value="<%%VALUE(Name)%%>">&nbsp;&nbsp;</td>
+					</tr>
+				<tr>
+					<td class=TableHeader valign=top>
+						<div class=TableHeader style="text-align:right;">Available</div>
+						</td>
+					<td class="TableBody" id="noMouseOver" valign="top"><input tabindex="1" type="checkbox" name="Available" id="Available" value="1" <%%CHECKED(Available)%%>>&nbsp;&nbsp;</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+
+
+	<div id="fieldDescription" class="fieldDescription" onclick="this.style.visibility='hidden';">&nbsp;</div>
+
+
+	<script>
+		if(document.getElementsByName('Name').length){
+			document.getElementsByName('Name')[0].focus();
+		}
+		document.observe("dom:loaded", function() {
+			var formAlreadyChanged=0;
+			$$('form')[0].observe('change', function(){ if(formAlreadyChanged) return; $('deselect').highlight().lastChild.data = " <%%TRANSLATION(Cancel)%%>"; formAlreadyChanged=1; });
+		});
+	</script>
