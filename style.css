@@ -56,7 +56,7 @@
 	font-size: 12px;
 	background-color: #E9E5D9;
 	text-align: center;
-	padding: 3px;
+	padding: 3px 15px;
 }
 
 .TableBodySelected{
@@ -361,9 +361,19 @@ select.Lookup{ width: 300px; }
 	background-color: #FBFBFB;
 	border: 2px solid black;
 	border-radius: 4px 4px 4px 4px;
-	font-size: 1.5em;
+	font-size: 1.1em;
 	padding: 11px 5px 11px 8px;
-	width: 446px;
+	width: 246px;
+	z-index: 2;
+	margin: 0 0 10px 0;
+}
+#login-form select{
+	font-family: "Helvetica Neue",Helvetica,Arial,Verdana,sans-serif;
+	background-color: #FBFBFB;
+	border: 2px solid black;
+	border-radius: 4px 4px 4px 4px;
+	font-size: 1.1em;
+	width: 246px;
 	z-index: 2;
 	margin: 0 0 10px 0;
 }
@@ -380,7 +390,7 @@ select.Lookup{ width: 300px; }
 	padding: 18px 40px;
 }
 #login-form{
-	width: 497px;
+	width: 297px;
 	float: right;
 	margin: 0 20px 20px 20px;
 	color: #316B40;
