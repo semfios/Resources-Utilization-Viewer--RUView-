@@ -80,7 +80,7 @@
 		<?php echo $year; ?>
 		<a href="chart.php?year=<?php echo $nextYear; ?>"><?php echo $nextYear; ?></a>
 	</div>
-	<?
+	<?php
 	
 	// Display month grid lines
 	$prevLeft = $chart['left'];
@@ -103,7 +103,7 @@
 			">
 			<?php echo date('M Y', strtotime("$year-$m-01")); ?>
 		</div>
-		<?
+		<?php
 		
 		// today line
 		if($year==$thisYear && $m==$thisMonth){
@@ -118,7 +118,7 @@
 					height: <?php echo ((count($resource) + 0.5) * ($chart['resourceHeight'] + $chart['resourceSeparator'])); ?>px;
 					z-index: 2;
 				"></div>
-			<?
+			<?php
 		}
 		
 		$prevLeft += $daysPerMonth * $chart['dayWidth'];
@@ -145,7 +145,7 @@
 						color: <?php echo ($available ? 'DarkBlue' : 'Silver'); ?>;
 					"><?php echo $ResourceName; ?></a>
 		</div>
-		<?
+		<?php
 	}
 
 	
@@ -178,7 +178,7 @@
 			onclick="window.location='assignments_view.php?SelectedID=<?php echo $assDetails['Id']; ?>';">
 				<?php echo $project[$assDetails['ProjectId']]; ?>
 		</div>
-		<?
+		<?php
 	}
 
 	include("$d/footer.php");
