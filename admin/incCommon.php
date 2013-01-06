@@ -2,8 +2,8 @@
 	error_reporting(E_ALL ^ E_NOTICE);
 	if(function_exists('set_magic_quotes_runtime')) @set_magic_quotes_runtime(0);
 	ob_start();
-	$d=dirname(__FILE__);
-	include("$d/incFunctions.php");
+	$currDir=dirname(__FILE__);
+	include("$currDir/incFunctions.php");
 
 	// check sessions config
 	$noPathCheck=True;
@@ -35,14 +35,14 @@
 
 
 	// check if initial setup was performed or not
-	if(!is_file("$d/../config.php")){
+	if(!is_file("$currDir/../config.php")){
 		errorMsg("ERROR! You didn't configure your connection yet. Please <a href=\"../setup.php\">run the setup procedure</a> first.");
 		exit;
 	}
 
 
 	// check if the file 'incConfig.php' exists or not. If not, generate one.
-	$conFile="$d/incConfig.php";
+	$conFile="$currDir/incConfig.php";
 
 	if(!is_file($conFile)){
 		if(!$fp=@fopen($conFile, "w")){
@@ -97,7 +97,7 @@
 		// is there a user trying to log in?
 		if(!checkUser($_POST['username'], $_POST['password'])){
 			// display login form
-			include("$d/pageLogin.php");
+			include("$currDir/pageLogin.php");
 			exit;
 		}else{
 			redirect('pageHome.php');

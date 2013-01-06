@@ -1,9 +1,9 @@
 <?php
-	$d=dirname(__FILE__);
-	include("$d/defaultLang.php");
-	include("$d/language.php");
-	include("$d/lib.php");
-	include("$d/header.php");
+	$currDir=dirname(__FILE__);
+	include("$currDir/defaultLang.php");
+	include("$currDir/language.php");
+	include("$currDir/lib.php");
+	include("$currDir/header.php");
 
 #_______________________________________________________________________________
 # Step 4: Final step; change the password
@@ -222,9 +222,9 @@
 			</form>
 		<br /><br />
 		<div class="TableFooter">
-			<b><a href=http://bigprof.com/appgini/>BigProf Software</a> - <?php echo $Translation['powered by']; ?> AppGini 4.70</b>
+			<b><a href=http://bigprof.com/appgini/>BigProf Software</a> - <?php echo $Translation['powered by']; ?> AppGini 5.00</b>
 			</div>
 		</div>
 	<?php
 ?>
-<?php include("$d/footer.php"); ?>
+<?php include("$currDir/footer.php"); ?>

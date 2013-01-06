@@ -9,6 +9,10 @@
 	// =====================================================
 
 
+	// general config
+	// location of uploads folder
+	$Translation['ImageFolder'] = './images/';
+
 	// datalist.php
 	$Translation['powered by'] = "Powered by";
 	$Translation['quick search'] = "Quick Search";
@@ -191,7 +195,34 @@
 	$Translation['No records found']='No records found';
 	$Translation['You can add children records after saving the main record first']='You can add children records after saving the main record first';
 
-	// general config
-	// location of uploads folder
-	$Translation['ImageFolder'] = './images/'
+	$Translation['ascending'] = 'Ascending';
+	$Translation['descending'] = 'Descending';
+	$Translation['then by'] = 'Then by';
+
+	// membership_profile
+	$Translation['Legend'] = 'Legend';
+	$Translation['Table'] = 'Table';
+	$Translation['Edit'] = 'Edit';
+	$Translation['View'] = 'View';
+	$Translation['Only your own records'] = 'Only your own records';
+	$Translation['All records owned by your group'] = 'All records owned by your group';
+	$Translation['All records'] = 'All records';
+	$Translation['Not allowed'] = 'Not allowed';
+	$Translation['Your info'] = 'Your info';
+	$Translation['Hello user'] = 'Hello %s!';
+	$Translation['Your access permissions'] = 'Your access permissions';
+	$Translation['Update profile'] = 'Update profile';
+	$Translation['Update password'] = 'Update password';
+	$Translation['Change your password'] = 'Change your password';
+	$Translation['Old password'] = 'Old Password';
+	$Translation['Password strength: weak'] = 'Password strength: weak';
+	$Translation['Password strength: good'] = 'Password strength: good';
+	$Translation['Password strength: strong'] = 'Password strength: strong';
+	$Translation['Wrong password'] = 'Wrong password';
+	$Translation['Your profile was updated successfully'] = 'Your profile was updated successfully';
+	$Translation['Your password was changed successfully'] = 'Your password was changed successfully';
+	$Translation['Your IP address'] = 'Your IP address';
+
+	/* Added in AppGini 4.90 */
+	$Translation['Records to display'] = 'Records to display';
 ?>

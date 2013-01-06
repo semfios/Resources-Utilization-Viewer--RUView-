@@ -1,18 +1,18 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
-	include("$d/incHeader.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
+	include("$currDir/incHeader.php");
 	$mailsPerBatch=5;
 
 	$queue=makeSafe($_GET['queue']);
-	$queueFile="$d/$queue.php";
+	$queueFile="$currDir/$queue.php";
 	if(!is_file($queueFile)){
 		echo "<div class=\"status\">Invalid mail queue.</div>";
-		include("$d/incFooter.php");
+		include("$currDir/incFooter.php");
 	}
 
 	include($queueFile);
-	$fLog=@fopen("$d/mailLog.log", "a");
+	$fLog=@fopen("$currDir/mailLog.log", "a");
 	// send a batch of up to $mailsPerBatch messages
 	$i=0;
 	foreach($to as $email){
@@ -31,20 +31,20 @@
 		@unlink($queueFile);
 		?>
 		<h1>Done!</h1>You may close this page now or browse to some other page.
-		<br /><br /><pre style="text-align: left;"><?php echo "Mail log:\n".@implode("", @file("$d/mailLog.log")); ?></pre>
+		<br /><br /><pre style="text-align: left;"><?php echo "Mail log:\n".@implode("", @file("$currDir/mailLog.log")); ?></pre>
 		<?php
-		@unlink("$d/mailLog.log");
-		include("$d/incFooter.php");
+		@unlink("$currDir/mailLog.log");
+		include("$currDir/incFooter.php");
 	}else{
 		while($i--){ array_shift($to); }
 
 		if(!$fp=fopen($queueFile, "w")){
 			?>
 			<div class="status">
-				Couldn't save mail queue. Please make sure the directory '<?php echo $d; ?>' is writeable (chmod 755 or chmod 777).
+				Couldn't save mail queue. Please make sure the directory '<?php echo $currDir; ?>' is writeable (chmod 755 or chmod 777).
 				</div>
 			<?php
-			include("$d/incFooter.php");
+			include("$currDir/incFooter.php");
 		}else{
 			fwrite($fp, "<?php\n");
 			foreach($to as $recip){
@@ -64,5 +64,5 @@
 		redirect("pageSender.php?queue=$queue");
 	}
 
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 ?>

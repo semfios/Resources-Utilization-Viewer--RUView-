@@ -1,7 +1,7 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
-	include("$d/incHeader.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
+	include("$currDir/incHeader.php");
 ?>
 
 <?php
@@ -38,8 +38,8 @@
 	}
 ?>
 
-<table align="center" width="750" cellspacing="8" cellpadding="0" border="0">
-	<tr><td colspan="2" align="center">
+<table align="center" width="950" cellspacing="8" cellpadding="0" border="0">
+	<tr><td colspan="3" align="center">
 		<h1>Membership Management Homepage</h1>
 		</td></tr>
 	<tr><td valign="top" align="left">
@@ -78,6 +78,42 @@
 		}
 	?>
 	</table>
+<!-- ####################################################### -->
+
+	</td><td valign="top" align="right" rowspan="2">
+<!-- ################# Add-ons available ######################## -->
+	<?php
+		$xml = @simplexml_load_file('http://bigprof.com/appgini/taxonomy/term/6/0/feed');
+		if(count($xml->channel->item)){
+			?>
+			<table cellspacing="0" width="200">
+			<tr><td colspan="2" class="tdHeader">Available add-ons</td></tr>
+			<?php
+				$addOnId = 0;
+				foreach($xml->channel->item as $indx => $data){
+					$addOnId++; if($addOnId > 10) break;
+					?>
+					<tr>
+						<td class="tdCell" align="left">
+							<?php echo (strtotime($data->pubDate) > (@time() - 60 * 24 * 60 * 60) ? '<img src="../new.png" align="top" /> ' : ''); ?><a href="#" onclick="return showDialog('add-on-<?php echo $addOnId; ?>');"><?php echo $data->title; ?></a><br/>
+							<div class="dialog-box hidden-block" id="add-on-<?php echo $addOnId; ?>">
+								<h3><a href="<?php echo $data->link; ?>" target="_blank"><?php echo $data->title; ?></a></h3>
+								<p><?php echo $data->description; ?></p>
+								<div align="right">
+									[<a href="<?php echo $data->link; ?>" target="_blank">More info</a>]
+									[<a onclick="return hideDialogs();" href="#" target="_blank">Close</a>]
+								</div>
+							</div>
+						</td>
+					</tr>
+					<?php
+				}
+			?>
+				<tr><td class="tdCell" align="center"><a href="http://bigprof.com/appgini/add-ons" target="_blank">View all add-ons</a></td></tr>
+			</table>
+			<?php
+		}
+	?>
 <!-- ####################################################### -->
 
 	</td></tr>
@@ -163,5 +199,5 @@
 	</td></tr></table>
 
 <?php
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 ?>

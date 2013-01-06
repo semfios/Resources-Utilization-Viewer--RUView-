@@ -1,8 +1,8 @@
 <?php
-	$d=dirname(__FILE__);
-	include("$d/defaultLang.php");
-	include("$d/language.php");
-	include("$d/lib.php");
+	$currDir=dirname(__FILE__);
+	include("$currDir/defaultLang.php");
+	include("$currDir/language.php");
+	include("$currDir/lib.php");
 
 	// upload paths
 	$p=array

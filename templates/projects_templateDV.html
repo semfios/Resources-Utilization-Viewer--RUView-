@@ -11,9 +11,10 @@
 			</td>
 		</tr>
 	<tr>
-		<td class=TableHeader colspan=3 height=25>
+		<td class="TableHeader" colspan="3">
 			<div class="buttons" style="float: right;">
 				<a href="assignments_view.php?FilterField[1]=2&FilterOperator[1]=%3C%3D%3E&FilterValue[1]=<%%URLVALUE(Name)%%>" style="visibility: hidden;" id="assignments_link">Assignments <img src="view.gif" /></a>
+				<input type="hidden" id="assignments_hclink" value="assignments_view.php?FilterField[1]=2&FilterOperator[1]=%3C%3D%3E&FilterValue[1]=<%%URLVALUE(Name)%%>">
 				</div>
 			</td>
 		</tr>
@@ -65,14 +66,34 @@
 	</table>
 
 
-	<div id="fieldDescription" class="fieldDescription" onclick="this.style.visibility='hidden';">&nbsp;</div>
+	<div id="projects-children"></div>
 
+	<div id="fieldDescription" class="fieldDescription" onclick="this.style.visibility='hidden';">&nbsp;</div>
 
 	<script>
 		if(document.getElementsByName('Name').length){
 			document.getElementsByName('Name')[0].focus();
 		}
 		document.observe("dom:loaded", function() {
-			$$('form')[0].observe('change', function(){ $('deselect').highlight().lastChild.data = " <%%TRANSLATION(Cancel)%%>"; });
+			var formAlreadyChanged=0;
+			$$('form')[0].observe('change', function(){ if(formAlreadyChanged) return; $('deselect').highlight().lastChild.data = " <%%TRANSLATION(Cancel)%%>"; formAlreadyChanged=1; });
+		});
+
+		document.observe("dom:loaded", function() {
+			/* when no record is selected ('add new' mode) */
+			if($$('input[name=SelectedID]')[0].value==''){
+				/* hide links to children tables */
+				$$('a[id]').findAll(function(cl){ return cl.id.match(/_link$/); }).invoke('hide');
+				/* skip loading parent/children view */
+				return false;
+			}
+			post(
+				'parent-children.php', {
+					ParentTable: 'projects',
+					SelectedID: '<%%VALUE(Id)%%>',
+					Operation: 'show-children'
+				},
+				'projects-children'
+			);
 		});
 	</script>

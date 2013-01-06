@@ -1,6 +1,6 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
 
 	// validate input
 	$groupID=intval($_GET['groupID']);
@@ -8,13 +8,13 @@
 	// make sure group has no members
 	if(sqlValue("select count(1) from membership_users where groupID='$groupID'")){
 		errorMsg("Can't delete this group. Please remove members first.");
-		include("$d/incFooter.php");
+		include("$currDir/incFooter.php");
 	}
 
 	// make sure group has no records
 	if(sqlValue("select count(1) from membership_userrecords where groupID='$groupID'")){
 		errorMsg("Can't delete this group. Please transfer its data records to another group first..");
-		include("$d/incFooter.php");
+		include("$currDir/incFooter.php");
 	}
 
 

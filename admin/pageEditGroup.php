@@ -1,6 +1,6 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
 
 	// get groupID of anonymous group
 	$anonGroupID=sqlValue("select groupID from membership_groups where name='".$adminConfig['anonymousGroup']."'");
@@ -45,7 +45,7 @@
 			// make sure group name is unique
 			if(sqlValue("select count(1) from membership_groups where name='$name'")){
 				echo "<div class=\"error\">Error: Group name already exists. You must choose a unique group name.</div>";
-				include("$d/incFooter.php");
+				include("$currDir/incFooter.php");
 			}
 
 			// add group
@@ -67,7 +67,7 @@
 			// make sure group name is unique
 			if(sqlValue("select count(1) from membership_groups where name='$name' and groupID!='$groupID'")){
 				echo "<div class=\"error\">Error: Group name already exists. You must choose a unique group name.</div>";
-				include("$d/incFooter.php");
+				include("$currDir/incFooter.php");
 			}
 
 			// update group
@@ -97,7 +97,7 @@
 		$groupID=intval($_GET['groupID']);
 	}
 
-	include("$d/incHeader.php");
+	include("$currDir/incHeader.php");
 
 	if($groupID!=''){
 		// fetch group data to fill in the form below
@@ -282,5 +282,5 @@
 
 
 <?php
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 ?>

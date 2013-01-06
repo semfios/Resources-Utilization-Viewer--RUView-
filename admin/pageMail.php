@@ -1,7 +1,7 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
-	include("$d/incHeader.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
+	include("$currDir/incHeader.php");
 
 	// check configured sender
 	if(!isEmail($adminConfig['senderEmail'])){
@@ -12,7 +12,7 @@
 			Please <a href="pageSettings.php">correct it first</a> then try again.
 			</div>
 		<?php
-		include("$d/incFooter.php");
+		include("$currDir/incFooter.php");
 	}
 
 	// determine and validate recipients
@@ -29,7 +29,7 @@
 				Couldn't find recipient. Please make sure you provide a valid recipient.
 				</div>
 			<?php
-			include("$d/incFooter.php");
+			include("$currDir/incFooter.php");
 		}
 	}else{
 	// begin sending emails
@@ -56,7 +56,7 @@
 				Couldn't find recipient. Please make sure you provide a valid recipient.
 				</div>
 			<?php
-			include("$d/incFooter.php");
+			include("$currDir/incFooter.php");
 		}
 
 		// create a recipients array
@@ -78,19 +78,19 @@
 				Couldn't find any recipients. Please make sure you provide a valid recipient.
 				</div>
 			<?php
-			include("$d/incFooter.php");
+			include("$currDir/incFooter.php");
 		}
 
 		// save mail queue
 		$queueFile=md5(microtime());
-		$d=dirname(__FILE__);
-		if(!$fp=fopen("$d/$queueFile.php", "w")){
+		$currDir=dirname(__FILE__);
+		if(!$fp=fopen("$currDir/$queueFile.php", "w")){
 			?>
 			<div class="status">
-				Couldn't save mail queue. Please make sure the directory '<?php echo $d; ?>' is writeable (chmod 755 or chmod 777).
+				Couldn't save mail queue. Please make sure the directory '<?php echo $currDir; ?>' is writeable (chmod 755 or chmod 777).
 				</div>
 			<?php
-			include("$d/incFooter.php");
+			include("$currDir/incFooter.php");
 		}else{
 			fwrite($fp, "<?php\n");
 			foreach($to as $recip){
@@ -104,7 +104,7 @@
 
 		// redirect to mail queue processor
 		redirect("pageSender.php?queue=$queueFile");
-		include("$d/incFooter.php");
+		include("$currDir/incFooter.php");
 	}
 
 
@@ -166,5 +166,5 @@
 		</table>
 </form>
 <?php
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 ?>

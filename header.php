@@ -10,10 +10,11 @@
 		<script src="common.js.php"></script>
 		<link rel="stylesheet" type="text/css" href="resources/lightbox/css/lightbox.css" media="screen">
 		<link rel="stylesheet" type="text/css" href="style.css">
+		<link rel="stylesheet" type="text/css" href="dynamic.css.php">
 		</head>
 	<body>
 		<!-- Add header template below here .. -->
 
-		<?php echo $htmlUserBar; ?>
+		<?php if(!$_REQUEST['Embedded']){ echo $htmlUserBar; } ?>
 		<!-- process notifications -->
 		<?php echo showNotifications(); ?>

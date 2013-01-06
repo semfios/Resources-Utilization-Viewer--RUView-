@@ -1,8 +1,8 @@
 <?php
 	@set_time_limit(0);
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
-	include("$d/incHeader.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
+	include("$currDir/incHeader.php");
 
 	// get a list of tables
 	$arrTables=getTableList();
@@ -68,7 +68,7 @@
 	// if all records of all tables have owners, no need to continue
 	if(!is_array($arrTablesNoOwners)){
 		echo "<div class=\"status\">All records in all tables have owners now.<br />Back to <a href=\"pageHome.php\">Admin homepage</a>.<div>";
-		include("$d/incFooter.php");
+		include("$currDir/incFooter.php");
 		exit;
 	}
 
@@ -160,5 +160,5 @@
 	</form>
 
 <?php
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 ?>

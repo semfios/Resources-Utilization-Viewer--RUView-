@@ -11,6 +11,12 @@
 			</td>
 		</tr>
 	<tr>
+		<td class="TableHeader" colspan="3">
+			<div class="buttons" style="float: right;">
+				</div>
+			</td>
+		</tr>
+	<tr>
 		<td>
 			<table id="dvForm" cellspacing="1" cellpadding="0">
 				<tr>
@@ -78,12 +84,13 @@
 
 	<div id="fieldDescription" class="fieldDescription" onclick="this.style.visibility='hidden';">&nbsp;</div>
 
-
 	<script>
 		if(document.getElementsByName('ProjectId').length){
 			document.getElementsByName('ProjectId')[0].focus();
 		}
 		document.observe("dom:loaded", function() {
-			$$('form')[0].observe('change', function(){ $('deselect').highlight().lastChild.data = " <%%TRANSLATION(Cancel)%%>"; });
+			var formAlreadyChanged=0;
+			$$('form')[0].observe('change', function(){ if(formAlreadyChanged) return; $('deselect').highlight().lastChild.data = " <%%TRANSLATION(Cancel)%%>"; formAlreadyChanged=1; });
 		});
+
 	</script>

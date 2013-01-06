@@ -1,7 +1,7 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
-	include("$d/incHeader.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
+	include("$currDir/incHeader.php");
 
 	if($_POST['saveChanges']!=''){
 		// validate inputs
@@ -13,7 +13,7 @@
 			// display status
 			echo "<div class=\"status\">Couldn't save admin settings. The new admin username is already held be a member. Please make sure the new admin username is unique.<br />Back to <a href=\"pageSettings.php\">Admin settings</a>.</div>";
 			// exit
-			include("$d/incFooter.php");
+			include("$currDir/incFooter.php");
 		}
 
 		$adminPassword=$_POST['adminPassword'];
@@ -52,7 +52,7 @@
 		// save changes
 		if(!$fp=@fopen($conFile, "w")){
 			errorMsg("Couldn't create the file '$conFile'. Please make sure the directory is writeable (Try chmoding it to 755 or 777).");
-			include("$d/incFooter.php");
+			include("$currDir/incFooter.php");
 		}else{
 			fwrite($fp, "<?php\n\t");
 
@@ -88,7 +88,7 @@
 		echo "<div class=\"status\">Admin settings saved successfully.<br />Back to <a href=\"pageSettings.php\">Admin settings</a>.</div>";
 
 		// exit
-		include("$d/incFooter.php");
+		include("$currDir/incFooter.php");
 	}    
 
 ?>
@@ -320,5 +320,5 @@
 
 
 <?php
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 ?>

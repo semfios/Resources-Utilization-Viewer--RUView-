@@ -1,13 +1,13 @@
 <?php
-	define('MAXROWS', 5000); /* max records to import from the csv file per run */
-	define('BATCHSIZE', 100); /* number of records to insert per query */
+	define('MAXROWS', 500000); /* max records to import from the csv file per run */
+	define('BATCHSIZE', 200); /* number of records to insert per query */
 
 	ignore_user_abort(true);
 	set_time_limit(0);
 	@ini_set('auto_detect_line_endings', '1');
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
-	include("$d/incHeader.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
+	include("$currDir/incHeader.php");
 
 	$arrTables=getTableList();
 
@@ -23,7 +23,7 @@
 				Error: File '<?php echo $fn; ?>' not found.
 				</div>
 			<?php
-			include("$d/incFooter.php");
+			include("$currDir/incFooter.php");
 			exit;
 		}
 
@@ -65,9 +65,9 @@
 
 		<tr><td align="right" colspan="<?php echo (count($arrPreviewData[0])+1); ?>" style="<?php echo $headCellStyle; ?>">
 			<input type="button" value="Change CSV settings" style="font-weight: bold;" onclick="
-				document.getElementById('advancedOptions').style.visibility='visible'; 
-				document.getElementById('applyCSVSettings').style.visibility='visible';
-				this.style.visibility='hidden';
+				document.getElementById('advancedOptions').style.display='inline'; 
+				document.getElementById('applyCSVSettings').style.display='inline';
+				this.style.display='none';
 				">
 			<input type="submit" name="csvImport" value="Confirm and import CSV data &gt;" style="font-weight: bold;" onclick="this.visibility='hidden';">
 			</td></tr>
@@ -105,7 +105,7 @@
 				Error: File '<?php echo $fn; ?>' not found.
 				</div>
 			<?php
-			include("$d/incFooter.php");
+			include("$currDir/incFooter.php");
 			exit;
 		}
 
@@ -281,7 +281,7 @@
 		<?php
 	}
 
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 
 	##########################################################################
 	function getCSVArray($start=0, $numRows=0){

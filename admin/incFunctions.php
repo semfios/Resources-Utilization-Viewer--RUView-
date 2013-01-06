@@ -440,7 +440,7 @@
 	}
 	########################################################################
 	function getUploadedFile($FieldName, $MaxSize=0, $FileTypes='csv|txt', $NoRename=false, $dir=''){
-		$d=dirname(__FILE__);
+		$currDir=dirname(__FILE__);
 		if(is_array($_FILES)){
 			$f = $_FILES[$FieldName];
 		}else{
@@ -451,11 +451,11 @@
 			$MaxSize=toBytes(ini_get('upload_max_filesize'));
 		}
 
-		if(!is_dir("$d/csv")){
-			@mkdir("$d/csv");
+		if(!is_dir("$currDir/csv")){
+			@mkdir("$currDir/csv");
 		}
 
-		$dir=(is_dir($dir) && is_writable($dir) ? $dir : "$d/csv/");
+		$dir=(is_dir($dir) && is_writable($dir) ? $dir : "$currDir/csv/");
 
 		if($f['error']!=4 && $f['name']!=''){
 			if($f['size']>$MaxSize || $f['error']){

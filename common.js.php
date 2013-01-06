@@ -1,9 +1,24 @@
 <?php
 	@header("Content-Type: text/javascript; charset=iso-8859-1");
-	$d=dirname(__FILE__);
-	include("$d/defaultLang.php");
-	include("$d/language.php");
+	$currDir=dirname(__FILE__);
+	include("$currDir/defaultLang.php");
+	include("$currDir/language.php");
 ?>
+
+document.observe("dom:loaded", function() {
+	colorize();
+	loadScript('resources/modalbox/modalbox.js', 'resources/modalbox/modalbox.css');
+});
+
+function colorize(){
+	$$('tr.colorize').invoke('observe', 'mouseover', function(){ 
+		this.descendants().grep(new Selector("td,a")).invoke('setStyle', { backgroundColor: '#FFF0C2' }); 
+	});
+	$$('tr.colorize').invoke('observe', 'mouseout', function(){ 
+		this.descendants().grep(new Selector("td,a")).invoke('setStyle', { backgroundColor: '' }); 
+	});
+}
+
 function showDescription(tableName, fieldName, e){
 	var desc = {};
 	desc["resources"] = {};
@@ -39,26 +54,6 @@ function showDescription(tableName, fieldName, e){
 
 	return false;
 }
-function makeResizeable(id){ // sets the textarea with given id as resizeable
-	var minHeight=50;
-	$(id).insert({ after: '<div id="resize'+id+'" title="Drag the bar up or down to resize the text box." style="width:50px; height:5px; margin: -2px 0 2px; padding: 0; cursor:n-resize; border:1px solid #000;" class="TableHeader"></div>' });
-	$('resize'+id).setStyle({ width: ($(id).getWidth()-2)+'px' });
-	$(id).setStyle({ resize: 'none' });
-	new Draggable('resize'+id, {
-		constraint: 'vertical', scroll: window, revert: true,
-		change: function(d){
-			var poRA=$('resize'+id).positionedOffset();
-			var poA=$(id).positionedOffset();
-			var Ah=poRA[1]-poA[1];
-			
-			if(Ah<minHeight){ // enforce min height
-				$(id).setStyle({ height: minHeight+'px' });
-			}else{
-				$(id).setStyle({ height: Ah+'px' });
-			}
-		}
-	});
-}
 function resources_validateData(){
 	return true;
 }
@@ -66,7 +61,7 @@ function projects_validateData(){
 	return true;
 }
 function assignments_validateData(){
-	if($('Commitment').value==''){ alert('<?php echo addslashes($Translation['error:']); ?> Commitment: <?php echo addslashes($Translation['field not null']); ?>'); $('Commitment').focus(); return false; };
+	if($('Commitment').value==''){ Modalbox.show('<div class="Error" style="width: 90%; margin: 0;"><?php echo addslashes($Translation['field not null']); ?></div>', { title: "<?php echo addslashes($Translation['error:']); ?> Commitment", afterHide: function(){ $('Commitment').focus(); } }); return false; };
 	return true;
 }
 function post(url, params, update, disable, loading){
@@ -76,15 +71,97 @@ function post(url, params, update, disable, loading){
 			parameters: params,
 			onCreate: function() {
 				if($(disable) != undefined) $(disable).disabled=true;
-				if($(loading) != undefined && update != loading) $(loading).innerHTML='<div style="direction: ltr;"><img src="loading.gif"> <?php echo $Translation['Loading ...']; ?></div>';
+				if($(loading) != undefined && update != loading) $(loading).update('<div style="direction: ltr;"><img src="loading.gif"> <?php echo $Translation['Loading ...']; ?></div>');
 			},
 			onSuccess: function(resp) {
-				if($(update) != undefined) $(update).innerHTML=resp.responseText;
+				if($(update) != undefined) $(update).update(resp.responseText);
 			},
 			onComplete: function() {
 				if($(disable) != undefined) $(disable).disabled=false;
-				if($(loading) != undefined && loading != update) $(loading).innerHTML='';
+				if($(loading) != undefined && loading != update) $(loading).update('');
 			}
 		}
 	);
+}
+function post2(url, params, notify, disable, loading, redirectOnSuccess){
+	new Ajax.Request(
+		url, {
+			method: 'post',
+			parameters: params,
+			onCreate: function() {
+				if($(disable) != undefined) $(disable).disabled=true;
+				if($(loading) != undefined) $(loading).show();
+			},
+			onSuccess: function(resp) {
+				/* show notification containing returned text */
+				if($(notify) != undefined) $(notify).removeClassName('Error').appear().update(resp.responseText);
+
+				/* in case no errors returned, */
+				if(!resp.responseText.match(/<?php echo $Translation['error:']; ?>/)){
+					/* redirect to provided url */
+					if(redirectOnSuccess != undefined){
+						window.location=redirectOnSuccess;
+
+					/* or hide notification after a few seconds if no url is provided */
+					}else{
+						if($(notify) != undefined) window.setTimeout(function(){ $(notify).fade(); }, 15000);
+					}
+
+				/* in case of error, apply error class */
+				}else{
+					$(notify).addClassName('Error');
+				}
+			},
+			onComplete: function() {
+				if($(disable) != undefined) $(disable).disabled=false;
+				if($(loading) != undefined) $(loading).hide();
+			}
+		}
+	);
+}
+function passwordStrength(password, username){
+	// score calculation (out of 10)
+	var score = 0;
+	re = new RegExp(username, 'i');
+	if(password.match(re)) score -= 5;
+	if(password.length < 6) score -= 3;
+	else if(password.length > 8) score += 5;
+	else score += 3;
+	if(password.match(/(.*[0-9].*[0-9].*[0-9])/)) score += 2;
+	if(password.match(/(.*[!,@,#,$,%,^,&,*,?,_,~].*[!,@,#,$,%,^,&,*,?,_,~])/)) score += 3;
+	if(password.match(/([a-z].*[A-Z])|([A-Z].*[a-z])/)) score += 2;
+
+	if(score >= 9)
+		return 'strong';
+	else if(score >= 5)
+		return 'good';
+	else
+		return 'weak';
+}
+function validateEmail(email) { 
+	var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+	return re.test(email);
+}
+function loadScript(jsUrl, cssUrl, callback){
+	// adding the script tag to the head
+	var head = document.getElementsByTagName('head')[0];
+	var script = document.createElement('script');
+	script.type = 'text/javascript';
+	script.src = jsUrl;
+
+	if(cssUrl != ''){
+		var css = document.createElement('link');
+		css.href = cssUrl;
+		css.rel = "stylesheet";
+		css.type = "text/css";
+		head.appendChild(css);
+	}
+
+	// then bind the event to the callback function 
+	// there are several events for cross browser compatibility
+	if(script.onreadystatechange != undefined){ script.onreadystatechange = callback; }
+	if(script.onload != undefined){ script.onload = callback; }
+
+	// fire the loading
+	head.appendChild(script);
 }

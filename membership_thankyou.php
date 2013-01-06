@@ -1,9 +1,9 @@
 <?php
-	$d=dirname(__FILE__);
-	include("$d/defaultLang.php");
-	include("$d/language.php");
-	include("$d/lib.php");
-	include("$d/header.php");
+	$currDir=dirname(__FILE__);
+	include("$currDir/defaultLang.php");
+	include("$currDir/language.php");
+	include("$currDir/lib.php");
+	include("$currDir/header.php");
 
 	if($_GET['redir']==1){
 		echo '<META HTTP-EQUIV="Refresh" CONTENT="5;url=index.php?signIn=1">';
@@ -23,4 +23,4 @@
 			</div>
 		</div>
 	</center>
-<?php include("$d/footer.php"); ?>
+<?php include("$currDir/footer.php"); ?>

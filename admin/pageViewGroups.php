@@ -1,7 +1,7 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
-	include("$d/incHeader.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
+	include("$currDir/incHeader.php");
 
 	if($_GET['searchGroups']!=""){
 		$searchSQL=makeSafe($_GET['searchGroups']);
@@ -127,5 +127,5 @@
 	</table>
 
 <?php
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 ?>

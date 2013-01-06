@@ -3,6 +3,12 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 		<link rel="stylesheet" type="text/css" href="adminStyles.css">
+		<link rel="stylesheet" type="text/css" href="../resources/modalbox/modalbox.css">
+
+		<script language="JavaScript1.2" src="toolTips.js" type="text/javascript"></script>
+		<script src="../resources/lightbox/js/prototype.js"></script>
+		<script src="../resources/lightbox/js/scriptaculous.js?load=effects,builder,dragdrop,controls"></script>
+		<script src="../resources/modalbox/modalbox.js"></script>
 		<script>
 
 			// VALIDATION FUNCTIONS FOR VARIOUS PAGES
@@ -13,7 +19,7 @@
 				if(p1=='' || p1==p2){
 					return true;
 				}else{
-					window.alert('Password doesn\'t match.');
+					Modalbox.show('<div class="highlight" style="width: 90%; margin: 0;">Password doesn\'t match.</div>', { title: "Error" });
 					return false;
 				}
 			}
@@ -21,7 +27,7 @@
 			function jsValidateEmail(address){
 				var reg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
 				if(reg.test(address) == false){
-					alert('Invalid Email Address');
+					Modalbox.show('<div class="highlight" style="width: 90%; margin: 0;">Invalid Email Address</div>', { title: "Error" });
 					return false;
 				}else{
 					return true;
@@ -38,7 +44,7 @@
 				if(p1=='' || p1==p2){
 					return jsValidateEmail(document.getElementById('senderEmail').value);
 				}else{
-					window.alert('Password doesn\'t match.');
+					Modalbox.show('<div class="highlight" style="width: 90%; margin: 0;">Password doesn\'t match.</div>', { title: "Error" });
 					return false;
 				}
 			}
@@ -60,8 +66,7 @@
 				//confirm('sg='+sg+'\n'+'sm='+sm+'\n'+'dg='+dg+'\n'+'dm='+dm+'\n'+'mm='+mm+'\n'+'dmm='+dmm+'\n');
 
 				if(dmm && !dm){
-					alert('Please complete step 4 by selecting the member you want to transfer records to.');
-					document.getElementById('destinationMemberID').focus();
+					Modalbox.show('<div>Please complete step 4 by selecting the member you want to transfer records to.</div>', { title: "Info", afterHide: function(){ document.getElementById('destinationMemberID').focus(); } });
 					return false;
 				}
 
@@ -81,8 +86,35 @@
 				}
 			}
 
-			</script>
-		<script language="JavaScript1.2" src="toolTips.js" type="text/javascript"></script>
+			function showDialog(dialogId){
+				$$('.dialog-box').invoke('addClassName', 'hidden-block');
+				$(dialogId).removeClassName('hidden-block');
+				return false
+			};
+
+			function hideDialogs(){
+				$$('.dialog-box').invoke('addClassName', 'hidden-block');
+				return false
+			};
+
+		</script>
+		<style>
+			.dialog-box{
+				background-color: white;
+				border: 1px solid silver;
+				border-radius: 10px 10px 10px 10px;
+				box-shadow: 0 3px 100px silver;
+				left: 30%;
+				padding: 10px;
+				position: absolute;
+				top: 20%;
+				width: 40%;
+			}
+			.hidden-block{
+				display: none;
+			}
+		</style>
+
 		<title>Membership Management</title>
 		</head>
 	<body>
@@ -99,6 +131,7 @@
 		<a href="pageViewMembers.php" class="navLink">View Members</a> |
 		<a href="pageEditMember.php" class="navLink">Add Member</a> |
 		<a href="pageViewRecords.php" class="navLink">View Members' Records</a> |
+		<a href="pageUploadCSV.php" class="navLink">Import CSV data</a> |
 		<a href="pageHome.php?signOut=1" class="navLink">Sign Out</a>
 
 <?php

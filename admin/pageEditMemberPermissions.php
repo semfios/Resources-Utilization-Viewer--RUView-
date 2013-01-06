@@ -1,6 +1,6 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
 
 	// tables list
 		$tables=getTableList();
@@ -64,7 +64,7 @@
 		// we have an edit request for a group
 	}
 
-	include("$d/incHeader.php");
+	include("$currDir/incHeader.php");
 
 	// fetch group permissions to fill in the form below in case user has no special permissions
 		$res1=sql("select * from membership_grouppermissions where groupID='$groupID'", $eo);
@@ -180,5 +180,5 @@
 
 
 <?php
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 ?>

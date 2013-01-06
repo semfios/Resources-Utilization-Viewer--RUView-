@@ -4,9 +4,10 @@
 	ob_start();
 
 	// check if setup was performed or not yet
-	$d=dirname(__FILE__);
+	$currDir=dirname(__FILE__);
 	$setupStyle="border: solid 1px red; background-color: #FFFFE0; color: red; font-size: 16px; font-family: arial; font-weight: bold; padding: 10px; width:400px; text-align: left;";
-	if(!is_file("$d/config.php")){
+	if(!is_file("$currDir/config.php")){
+		header('Content-Type: text/html; charset=iso-8859-1');
 		?>
 		<META HTTP-EQUIV="Refresh" CONTENT="2;url=setup.php">
 		<center>
@@ -17,7 +18,8 @@
 		<?php
 		exit;
 	}
-	if(!is_file("$d/admin/incConfig.php")){
+	if(!is_file("$currDir/admin/incConfig.php")){
+		header('Content-Type: text/html; charset=iso-8859-1');
 		?>
 		<META HTTP-EQUIV="Refresh" CONTENT="2;url=admin/">
 		<center>
@@ -30,10 +32,10 @@
 	}
 	// -----------------------------------------
 
-	include("$d/admin/incFunctions.php");
-	include("$d/admin/incConfig.php");
+	include("$currDir/admin/incFunctions.php");
+	include("$currDir/admin/incConfig.php");
 	// include global hook functions
-	@include("$d/hooks/__global.php");
+	@include("$currDir/hooks/__global.php");
 
 	// check sessions config
 	$noPathCheck=True;
@@ -65,10 +67,33 @@
 	setupMembership();
 
 	// silently apply db changes, if any
-	@include_once("$d/updateDB.php");
+	@include_once("$currDir/updateDB.php");
 
 	// do we have a login request?
 	logInMember();
+
+	// convert expanded sorting variables, if provided, to SortField and SortDirection
+	define('maxSortBy', 4);
+	$postedOrderBy = array();
+	for($i = 0; $i < maxSortBy; $i++){
+		if(isset($_POST["OrderByField$i"])){
+			$sd = ($_POST["OrderDir$i"] == 'desc' ? 'desc' : 'asc');
+			if($sfi = intval($_POST["OrderByField$i"])){
+				$postedOrderBy[] = array($sfi => $sd);
+			}
+		}
+	}
+	if(count($postedOrderBy)){
+		$_POST['SortField'] = '';
+		$_POST['SortDirection'] = '';
+		foreach($postedOrderBy as $obi){
+			$sfi = ''; $sd = '';
+			foreach($obi as $sfi => $sd);
+			$_POST['SortField'] .= "$sfi $sd,";
+		}
+		$_POST['SortField'] = substr($_POST['SortField'], 0, -2 - strlen($sd));
+		$_POST['SortDirection'] = $sd;
+	}
 
 	#########################################################
 	/*
@@ -86,14 +111,16 @@
 		addFilter(i, filterAnd, filterField, filterOperator, filterValue) -- enforce a filter over data
 		clearFilters() -- clear all filters
 		getMemberInfo() -- returns an array containing the currently signed-in member's info
+		filterDropdownBy($filterable, $filterers, $parentFilterers, $parentPKField, $parentCaption, $parentTable, &$filterableCombo) -- applies cascading drop-downs for a lookup field, returns js code to be inserted into the page
+		br2nl($text) -- replaces all variations of HTML <br> tags with a new line character
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	*/
 	#########################################################
 	function getTableList(){
 		$arrTables=array(
-			'resources'=>array('Resources', '', 'table.gif'),
-			'projects'=>array('Projects', '', 'table.gif'),
-			'assignments'=>array('Assignments', '', 'table.gif')
+			'resources'=>array('Resources', '', 'resources/table_icons/account_balances.png'),
+			'projects'=>array('Projects', '', 'resources/table_icons/application_from_storage.png'),
+			'assignments'=>array('Assignments', '', 'resources/table_icons/client_account_template.png')
 			);
 		if(is_array($arrTables)){
 			foreach($arrTables as $tn=>$tc){
@@ -118,14 +145,14 @@
 
 		if($row=mysql_fetch_row($res)){
 			if($row[0] || $row[1] || $row[2] || $row[3]){
-				$arrRet[0]=TRUE;
+				$arrRet[0]=TRUE; /* allowAccess */
 			}else{
 				$arrRet[0]=FALSE;
 			}
-			$arrRet[1]=$row[0];
-			$arrRet[2]=$row[1];
-			$arrRet[3]=$row[2];
-			$arrRet[4]=$row[3];
+			$arrRet[1]=$row[0]; /* allowInsert */
+			$arrRet[2]=$row[1]; /* allowView */
+			$arrRet[3]=$row[2]; /* allowEdit */
+			$arrRet[4]=$row[3]; /* allowDelete */
 
 			return $arrRet;
 		}
@@ -229,17 +256,17 @@
 		?>
 		<div class="TableFooter" style="height: 20px; margin: 0 0 25px 0; padding: 3px 10px; border-radius: 4px;">
 			<?php if(!$homePage){ ?>
-				<div style="float: left; margin: 0 20px 0 0;"><a href="./"><img src="home.png" border="0" title="<?php echo $Translation['homepage']; ?>" /></a></div>
+				<div style="float: left; margin: 0 20px 0 0;"><a href="./index.php"><img src="home.png" border="0" title="<?php echo $Translation['homepage']; ?>" /></a></div>
 				<div style="float: left;">
 					<?php echo NavMenus(); ?>
 				</div>
-			<? } ?>
+			<?php } ?>
 			<div style="float: right;"><?php
 				if(!$_GET['signIn'] && !$_GET['loginFailed']){
 					if(getLoggedMemberID()==$adminConfig['anonymousMember']){
 						?><?php echo $Translation['not signed in']; ?>. <a href="index.php?signOut=1"><?php echo $Translation['sign in']; ?></a><?php
 					}else{
-						?><?php echo $Translation['signed as']; ?> '<?php echo getLoggedMemberID(); ?>'. <a href="index.php?signOut=1"><?php echo $Translation['sign out']; ?></a><?php
+						?><?php echo $Translation['signed as']; ?> '<a href="membership_profile.php"><?php echo getLoggedMemberID(); ?></a>'. <a href="index.php?signOut=1"><?php echo $Translation['sign out']; ?></a><?php
 					}
 				}
 			?></div>
@@ -289,16 +316,12 @@
 			return trim($date);
 		}
 
-		if(preg_match("/^\d{4}-\d{1,2}-\d{1,2}$/", trim($altDate))){
+		if($date != '--' && preg_match("/^\d{4}-\d{1,2}-\d{1,2}$/", trim($altDate))){
 			return trim($altDate);
 		}
 
-		if(($date==1 || !$date) && $altDate){
-			return @date('Y-m-d');
-		}
-
-		if($altDate && is_int($date)){
-			return @date('Y-m-d', @time() + ($date > 1 ? $date - 1 : $date) * 86400);
+		if($date != '--' && $altDate && intval($altDate)==$altDate){
+			return @date('Y-m-d', @time() + ($altDate >= 1 ? $altDate - 1 : $altDate) * 86400);
 		}
 
 		return '';
@@ -434,7 +457,7 @@
 			foreach($the_data_to_pass_to_the_view as $k => $v)
 				$$k = $v;
 		}
-		unset($the_data_to_pass_to_the_view);
+		unset($the_data_to_pass_to_the_view, $k, $v);
 
 		ob_start();
 		@include($view);
@@ -443,3 +466,82 @@
 
 		return $out;
 	}
+
+	#########################################################
+	function filterDropdownBy($filterable, $filterers, $parentFilterers, $parentPKField, $parentCaption, $parentTable, &$filterableCombo){
+		$filterersArray = explode(',', $filterers);
+		$parentFilterersArray = explode(',', $parentFilterers);
+		$parentFiltererList = '`' . implode('`, `', $parentFilterersArray) . '`';
+		$res=sql("SELECT `$parentPKField`, $parentCaption, $parentFiltererList FROM `$parentTable` ORDER BY 2", $eo);
+		$filterableData = array();
+		while($row=mysql_fetch_row($res)){
+			$filterableData[$row[0]] = $row[1];
+			$filtererIndex = 0;
+			foreach($filterersArray as $filterer){
+				$filterableDataByFilterer[$filterer][$row[$filtererIndex + 2]][$row[0]] = $row[1];
+				$filtererIndex++;
+			}
+			$row[0] = addslashes($row[0]);
+			$row[1] = addslashes($row[1]);
+			$jsonFilterableData .= "\"{$row[0]}\":\"{$row[1]}\",";
+		}
+		$jsonFilterableData .= '}';
+		$jsonFilterableData = '{'.str_replace(',}', '}', $jsonFilterableData);     
+		$filterJS = "\nvar {$filterable}_data = $jsonFilterableData;";
+
+		foreach($filterersArray as $filterer){
+			if(is_array($filterableDataByFilterer[$filterer])) foreach($filterableDataByFilterer[$filterer] as $filtererItem => $filterableItem){
+				$jsonFilterableDataByFilterer[$filterer] .= '"'.addslashes($filtererItem).'":{';
+				foreach($filterableItem as $filterableItemID => $filterableItemData){
+					$jsonFilterableDataByFilterer[$filterer] .= '"'.addslashes($filterableItemID).'":"'.addslashes($filterableItemData).'",';
+				}
+				$jsonFilterableDataByFilterer[$filterer] .= '},';
+			}
+			$jsonFilterableDataByFilterer[$filterer] .= '}';
+			$jsonFilterableDataByFilterer[$filterer] = '{'.str_replace(',}', '}', $jsonFilterableDataByFilterer[$filterer]);
+
+			$filterJS.="\n\n// code for filtering {$filterable} by {$filterer}\n";
+			$filterJS.="\nvar {$filterable}_data_by_{$filterer} = {$jsonFilterableDataByFilterer[$filterer]}; ";
+			$filterJS.="\nvar selected_{$filterable} = \$F('{$filterable}');";
+			$filterJS.="\nvar {$filterable}_change_by_{$filterer} = function(){";
+			$filterJS.="\n\t$('{$filterable}').options.length=0;";
+			$filterJS.="\n\t$('{$filterable}').options[0] = new Option();";
+			$filterJS.="\n\tif(\$F('{$filterer}')){";
+			$filterJS.="\n\t\tfor({$filterable}_item in {$filterable}_data_by_{$filterer}[\$F('{$filterer}')]){";
+			$filterJS.="\n\t\t\t$('{$filterable}').options[$('{$filterable}').options.length] = new Option(";
+			$filterJS.="\n\t\t\t\t{$filterable}_data_by_{$filterer}[\$F('{$filterer}')][{$filterable}_item],";
+			$filterJS.="\n\t\t\t\t{$filterable}_item,";
+			$filterJS.="\n\t\t\t\t({$filterable}_item == selected_{$filterable} ? true : false),";
+			$filterJS.="\n\t\t\t\t({$filterable}_item == selected_{$filterable} ? true : false)";
+			$filterJS.="\n\t\t\t);";
+			$filterJS.="\n\t\t}";
+			$filterJS.="\n\t}else{";
+			$filterJS.="\n\t\tfor({$filterable}_item in {$filterable}_data){";
+			$filterJS.="\n\t\t\t$('{$filterable}').options[$('{$filterable}').options.length] = new Option(";
+			$filterJS.="\n\t\t\t\t{$filterable}_data[{$filterable}_item],";
+			$filterJS.="\n\t\t\t\t{$filterable}_item,";
+			$filterJS.="\n\t\t\t\t({$filterable}_item == selected_{$filterable} ? true : false),";
+			$filterJS.="\n\t\t\t\t({$filterable}_item == selected_{$filterable} ? true : false)";
+			$filterJS.="\n\t\t\t);";
+			$filterJS.="\n\t\t}";
+			$filterJS.="\n\t}";
+			$filterJS.="\n\t$('{$filterable}').highlight();";
+			$filterJS.="\n};";
+			$filterJS.="\n$('{$filterer}').observe('change', function(){ window.setTimeout({$filterable}_change_by_{$filterer}, 25); });";
+			$filterJS.="\n";
+		}
+
+		$filterableCombo = new Combo;
+		$filterableCombo->ListType = 0;
+		$filterableCombo->ListItem = array_slice(array_values($filterableData), 0, 10);
+		$filterableCombo->ListData = array_slice(array_keys($filterableData), 0, 10);
+		$filterableCombo->SelectName = $filterable;
+		$filterableCombo->AllowNull = true;
+
+		return $filterJS;
+	}
+	#########################################################
+	function br2nl($text){
+		return  preg_replace('/\<br(\s*)?\/?\>/i', "\n", $text);
+	}
+

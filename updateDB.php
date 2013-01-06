@@ -81,7 +81,7 @@
 				echo str_replace("<TableName>", $tableName, $Translation["couldnt count"]);
 			}
 		}else{ // given tableName doesn't exist
-		
+
 			if($oldTableName!=''){ // if we have a table rename query
 				if($ro=@mysql_query("select count(1) from `$oldTableName`")){ // if old table exists, rename it.
 					$renameQuery=array_shift($arrAlter); // get and remove rename query

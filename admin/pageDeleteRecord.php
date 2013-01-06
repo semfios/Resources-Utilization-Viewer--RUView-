@@ -1,6 +1,6 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
 
 	// validate input
 	$recID=intval($_GET['recID']);

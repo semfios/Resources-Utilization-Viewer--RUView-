@@ -1,6 +1,6 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
 
 	// request to save changes?
 	if($_POST['saveChanges']!=''){
@@ -22,7 +22,7 @@
 		$recID=makeSafe($_GET['recID']);
 	}
 
-	include("$d/incHeader.php");
+	include("$currDir/incHeader.php");
 
 	if($recID!=''){
 		// fetch record data to fill in the form below
@@ -123,9 +123,9 @@
 								<td class="tdHeader"><div class="ColCaption">Value</div></td>
 								</tr>
 						<?php
-						include("$d/../language.php");
+						include("$currDir/../language.php");
 						foreach($field as $fn){
-							if(@is_file("$d/../".$Translation['ImageFolder'].$row[$fn])){
+							if(@is_file("$currDir/../".$Translation['ImageFolder'].$row[$fn])){
 								$op="<a href=\""."../".$Translation['ImageFolder'].$row[$fn]."\" target=\"_blank\">".htmlspecialchars($row[$fn])."</a>";
 							}else{
 								$op=htmlspecialchars($row[$fn]);
@@ -157,5 +157,5 @@
 
 
 <?php
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 ?>

@@ -1,6 +1,6 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
 
 	// get memberID of anonymous member
 	$anonMemberID=strtolower($adminConfig['anonymousMember']);
@@ -27,7 +27,7 @@
 			// make sure member name is unique
 			if(sqlValue("select count(1) from membership_users where lcase(memberID)='$memberID'")){
 				echo "<div class=\"error\">Error: Username already exists. You must choose a unique username.</div>";
-				include("$d/incFooter.php");
+				include("$currDir/incFooter.php");
 			}
 
 			// add member
@@ -42,7 +42,7 @@
 			// make sure member name is unique
 			if($oldMemberID!=$memberID && sqlValue("select count(1) from membership_users where lcase(memberID)='$memberID'")){
 				echo "<div class=\"error\">Error: Username already exists. You must choose a unique username.</div>";
-				include("$d/incFooter.php");
+				include("$currDir/incFooter.php");
 			}
 
 			// anonymousMember?
@@ -82,7 +82,7 @@
 		$addend=" to '".sqlValue("select name from membership_groups where groupID='$groupID'")."'";
 	}
 
-	include("$d/incHeader.php");
+	include("$currDir/incHeader.php");
 
 	if($memberID!=''){
 		// fetch group data to fill in the form below
@@ -258,5 +258,5 @@
 
 
 <?php
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 ?>

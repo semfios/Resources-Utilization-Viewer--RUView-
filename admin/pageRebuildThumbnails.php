@@ -1,7 +1,7 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
-	include("$d/incHeader.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
+	include("$currDir/incHeader.php");
 
 	// image paths
 	$p=array(
@@ -17,7 +17,7 @@
 		<form method="get" action="pageRebuildThumbnails.php" target="_blank">
 			Use this utility if you have one or more image fields in a table that don't have thumbnails or
 			have thumbnails with incorrect dimensions.<br><br>
-			
+
 			<b>Rebuild thumbnails of table</b> 
 			<?php echo htmlSelect('table', array_keys($p), array_keys($p), ''); ?>
 			<input type="submit" value="Rebuild">
@@ -25,7 +25,7 @@
 
 
 		<?php
-		include("$d/incFooter.php");
+		include("$currDir/incFooter.php");
 		exit;
 	}
 
@@ -72,4 +72,4 @@
 	</script>
 
 <?php
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");

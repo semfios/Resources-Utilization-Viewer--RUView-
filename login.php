@@ -1,5 +1,5 @@
 <?php if(!isset($Translation)){ @header('Location: index.php?signIn=1'); exit; } ?>
-<?php include("$d/header.php"); ?>
+<?php include("$currDir/header.php"); ?>
 
 <?php if($_GET['loginFailed']){ ?>
 	<div class="Error"><?php echo $Translation['login failed']; ?></div>
@@ -17,7 +17,7 @@
 	<fieldset id="inputs">
 		<label for="username"><?php echo $Translation['username']; ?></label>
 		<input name="username" id="username" type="text" placeholder="<?php echo $Translation['username']; ?>" required/>
-		
+
 		<label for="password"><?php echo $Translation['password']; ?></label>
 		<input name="password" id="password" type="password" placeholder="<?php echo $Translation['password']; ?>" required style="margin: 0;" />
 		<input type="checkbox" name="rememberMe" id="rememberMe" value="1"> <label for="rememberMe" style="display: inline;"><?php echo $Translation['remember me']; ?></label>
@@ -34,8 +34,8 @@
 <div style="clear: both;"></div>
 
 <div id="login-footer" class="TableFooter">
-	<b><a href=http://bigprof.com/appgini/>BigProf Software</a> - <?php echo $Translation['powered by']; ?> AppGini 4.70</b>
+	<b><a href=http://bigprof.com/appgini/>BigProf Software</a> - <?php echo $Translation['powered by']; ?> AppGini 5.00</b>
 </div>
 
 <script>document.getElementById('username').focus();</script>
-<?php include("$d/footer.php"); ?>
+<?php include("$currDir/footer.php"); ?>

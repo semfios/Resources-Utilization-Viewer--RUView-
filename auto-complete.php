@@ -1,8 +1,8 @@
 <?php
-	$d=dirname(__FILE__);
-	include("$d/defaultLang.php");
-	include("$d/language.php");
-	include("$d/lib.php");
+	$currDir=dirname(__FILE__);
+	include("$currDir/defaultLang.php");
+	include("$currDir/language.php");
+	include("$currDir/lib.php");
 
 	// auto complete queries for all lookup fields of the application.
 		$autoComplete['assignments']['ProjectId']="SELECT `Id`, `Name` FROM `projects` ORDER BY 2";

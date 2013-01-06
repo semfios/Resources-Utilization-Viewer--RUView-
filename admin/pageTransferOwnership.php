@@ -1,7 +1,7 @@
 <?php
-	$d=dirname(__FILE__);
-	require("$d/incCommon.php");
-	include("$d/incHeader.php");
+	$currDir=dirname(__FILE__);
+	require("$currDir/incCommon.php");
+	include("$currDir/incHeader.php");
 
 	/* we need the following variables:
 		$sourceGroupID
@@ -29,13 +29,13 @@
 		if(!sqlValue("select count(1) from membership_users where lcase(memberID)='$sourceMemberID' and groupID='$sourceGroupID'")){
 			if($sourceMemberID!=-1){
 				errorMsg("Invalid source member selected.");
-				include("$d/incFooter.php");
+				include("$currDir/incFooter.php");
 			}
 		}
 		if(!$moveMembers){
 			if(!sqlValue("select count(1) from membership_users where lcase(memberID)='$destinationMemberID' and groupID='$destinationGroupID'")){
 				errorMsg("Invalid destination member selected.");
-				include("$d/incFooter.php");
+				include("$currDir/incFooter.php");
 			}
 		}
 
@@ -119,7 +119,7 @@
 		<?php
 
 		// quit
-		include("$d/incFooter.php");
+		include("$currDir/incFooter.php");
 	}
 
 
@@ -310,5 +310,5 @@
 ?>
 
 <?php
-	include("$d/incFooter.php");
+	include("$currDir/incFooter.php");
 ?>
