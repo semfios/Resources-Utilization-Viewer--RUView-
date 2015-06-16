@@ -5,6 +5,15 @@
 
 	/* application schema as created in AppGini */
 	$schema = array(   
+		'assignments' => array(   
+			'Id' => array('appgini' => 'INT unsigned not null primary key auto_increment '),
+			'ProjectId' => array('appgini' => 'INT unsigned '),
+			'ProjectDuration' => array('appgini' => 'INT unsigned '),
+			'ResourceId' => array('appgini' => 'INT unsigned '),
+			'Commitment' => array('appgini' => 'FLOAT(3,2) not null default \'1.00\' '),
+			'StartDate' => array('appgini' => 'DATE '),
+			'EndDate' => array('appgini' => 'DATE ')
+		),
 		'resources' => array(   
 			'Id' => array('appgini' => 'INT unsigned not null primary key auto_increment '),
 			'Name' => array('appgini' => 'VARCHAR(40) '),
@@ -13,15 +22,6 @@
 		'projects' => array(   
 			'Id' => array('appgini' => 'INT unsigned not null primary key auto_increment '),
 			'Name' => array('appgini' => 'VARCHAR(40) '),
-			'StartDate' => array('appgini' => 'DATE '),
-			'EndDate' => array('appgini' => 'DATE ')
-		),
-		'assignments' => array(   
-			'Id' => array('appgini' => 'INT unsigned not null primary key auto_increment '),
-			'ProjectId' => array('appgini' => 'INT unsigned '),
-			'ProjectDuration' => array('appgini' => 'INT unsigned '),
-			'ResourceId' => array('appgini' => 'INT unsigned '),
-			'Commitment' => array('appgini' => 'FLOAT(3,2) not null default \'1.00\' '),
 			'StartDate' => array('appgini' => 'DATE '),
 			'EndDate' => array('appgini' => 'DATE ')
 		)

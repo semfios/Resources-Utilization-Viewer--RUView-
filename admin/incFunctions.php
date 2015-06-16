@@ -42,9 +42,9 @@
 	if(!function_exists('getTableList')){
 		function getTableList($skip_authentication = false){
 			$arrTables = array(   
+				'assignments' => 'Assignments',
 				'resources' => 'Resources',
-				'projects' => 'Projects',
-				'assignments' => 'Assignments'
+				'projects' => 'Projects'
 			);
 
 			return $arrTables;

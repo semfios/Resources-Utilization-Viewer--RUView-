@@ -118,9 +118,9 @@
 	function getTableList($skip_authentication = false){
 		$arrAccessTables = array();
 		$arrTables = array(   
-			'resources' => array('Resources', '', 'resources/table_icons/account_balances.png'),
-			'projects' => array('Projects', '', 'resources/table_icons/application_from_storage.png'),
-			'assignments' => array('Assignments', '', 'resources/table_icons/client_account_template.png')
+			'assignments' => array('Assignments', 'Here you can assign resources to projects.', 'resources/table_icons/client_account_template.png'),
+			'resources' => array('Resources', 'Define your resources here', 'resources/table_icons/account_balances.png'),
+			'projects' => array('Projects', 'Define your projects here', 'resources/table_icons/application_from_storage.png')
 		);
 		if($skip_authentication || getLoggedAdmin()) return $arrTables;
 
@@ -187,9 +187,9 @@
 	#########################################################
 	function get_sql_fields($table_name){
 		$sql_fields = array(   
+			'assignments' => "`assignments`.`Id` as 'Id', IF(    CHAR_LENGTH(`projects1`.`Name`), CONCAT_WS('',   `projects1`.`Name`), '') as 'ProjectId', IF(    CHAR_LENGTH(`projects1`.`StartDate`) || CHAR_LENGTH(`projects1`.`EndDate`), CONCAT_WS('',   `projects1`.`StartDate`, ' <b>to</b> ', `projects1`.`EndDate`), '') as 'ProjectDuration', IF(    CHAR_LENGTH(`resources1`.`Name`), CONCAT_WS('',   `resources1`.`Name`), '') as 'ResourceId', `assignments`.`Commitment` as 'Commitment', if(`assignments`.`StartDate`,date_format(`assignments`.`StartDate`,'%d/%m/%Y'),'') as 'StartDate', if(`assignments`.`EndDate`,date_format(`assignments`.`EndDate`,'%d/%m/%Y'),'') as 'EndDate'",
 			'resources' => "`resources`.`Id` as 'Id', `resources`.`Name` as 'Name', `resources`.`Available` as 'Available'",
-			'projects' => "`projects`.`Id` as 'Id', `projects`.`Name` as 'Name', if(`projects`.`StartDate`,date_format(`projects`.`StartDate`,'%d/%m/%Y'),'') as 'StartDate', if(`projects`.`EndDate`,date_format(`projects`.`EndDate`,'%d/%m/%Y'),'') as 'EndDate'",
-			'assignments' => "`assignments`.`Id` as 'Id', IF(    CHAR_LENGTH(`projects1`.`Name`), CONCAT_WS('',   `projects1`.`Name`), '') as 'ProjectId', IF(    CHAR_LENGTH(`projects1`.`StartDate`) || CHAR_LENGTH(`projects1`.`EndDate`), CONCAT_WS('',   `projects1`.`StartDate`, ' <b>to</b> ', `projects1`.`EndDate`), '') as 'ProjectDuration', IF(    CHAR_LENGTH(`resources1`.`Name`), CONCAT_WS('',   `resources1`.`Name`), '') as 'ResourceId', `assignments`.`Commitment` as 'Commitment', if(`assignments`.`StartDate`,date_format(`assignments`.`StartDate`,'%d/%m/%Y'),'') as 'StartDate', if(`assignments`.`EndDate`,date_format(`assignments`.`EndDate`,'%d/%m/%Y'),'') as 'EndDate'"
+			'projects' => "`projects`.`Id` as 'Id', `projects`.`Name` as 'Name', if(`projects`.`StartDate`,date_format(`projects`.`StartDate`,'%d/%m/%Y'),'') as 'StartDate', if(`projects`.`EndDate`,date_format(`projects`.`EndDate`,'%d/%m/%Y'),'') as 'EndDate'"
 		);
 
 		if(isset($sql_fields[$table_name])){
@@ -201,15 +201,15 @@
 	#########################################################
 	function get_sql_from($table_name, $skip_permissions = false){
 		$sql_from = array(   
+			'assignments' => "`assignments` LEFT JOIN `projects` as projects1 ON `projects1`.`Id`=`assignments`.`ProjectId` LEFT JOIN `resources` as resources1 ON `resources1`.`Id`=`assignments`.`ResourceId` ",
 			'resources' => "`resources` ",
-			'projects' => "`projects` ",
-			'assignments' => "`assignments` LEFT JOIN `projects` as projects1 ON `projects1`.`Id`=`assignments`.`ProjectId` LEFT JOIN `resources` as resources1 ON `resources1`.`Id`=`assignments`.`ResourceId` "
+			'projects' => "`projects` "
 		);
 
 		$pkey = array(   
+			'assignments' => 'Id',
 			'resources' => 'Id',
-			'projects' => 'Id',
-			'assignments' => 'Id'
+			'projects' => 'Id'
 		);
 
 		if(isset($sql_from[$table_name])){

@@ -237,6 +237,21 @@ function projects_form($selected_id = '', $AllowUpdate = 1, $AllowInsert = 1, $A
 	}else{
 	}
 
+	ob_start();
+	?>
+
+	<script>
+		// initial lookup values
+
+		jQuery(function() {
+		});
+	</script>
+	<?php
+
+	$lookups = str_replace('__RAND__', $rnd1, ob_get_contents());
+	ob_end_clean();
+
+
 	// code for template based detail view forms
 
 	// open the detail view template

@@ -31,10 +31,6 @@
 
 	// drop-downs config
 	$lookups = array(   
-		'resources' => array(  
-		),
-		'projects' => array(  
-		),
 		'assignments' => array(   
 			'ProjectId' => array(
 				'parent_table' => 'projects',
@@ -69,6 +65,10 @@
 				'list_type' => 0,
 				'not_null' => false
 			)
+		),
+		'resources' => array(  
+		),
+		'projects' => array(  
 		)
 	);
 

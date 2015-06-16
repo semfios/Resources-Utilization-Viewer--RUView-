@@ -11,10 +11,10 @@
 		}
 
 		// set up tables
-		setupTable('resources', "create table if not exists `resources` (   `Id` INT unsigned not null auto_increment , primary key (`Id`), `Name` VARCHAR(40) , `Available` VARCHAR(40) default '1' ) CHARSET utf8", $silent, array( "ALTER TABLE `resources` CONVERT TO CHARACTER SET utf8"));
-		setupTable('projects', "create table if not exists `projects` (   `Id` INT unsigned not null auto_increment , primary key (`Id`), `Name` VARCHAR(40) , `StartDate` DATE , `EndDate` DATE ) CHARSET utf8", $silent, array( "ALTER TABLE `projects` CONVERT TO CHARACTER SET utf8"));
-		setupTable('assignments', "create table if not exists `assignments` (   `Id` INT unsigned not null auto_increment , primary key (`Id`), `ProjectId` INT unsigned , `ProjectDuration` INT unsigned , `ResourceId` INT unsigned , `Commitment` FLOAT(3,2) not null default '1.00' , `StartDate` DATE , `EndDate` DATE ) CHARSET utf8", $silent, array( "ALTER TABLE `assignments` CONVERT TO CHARACTER SET utf8"));
+		setupTable('assignments', "create table if not exists `assignments` (   `Id` INT unsigned not null auto_increment , primary key (`Id`), `ProjectId` INT unsigned , `ProjectDuration` INT unsigned , `ResourceId` INT unsigned , `Commitment` FLOAT(3,2) not null default '1.00' , `StartDate` DATE , `EndDate` DATE ) CHARSET utf8", $silent);
 		setupIndexes('assignments', array('ProjectId','ResourceId'));
+		setupTable('resources', "create table if not exists `resources` (   `Id` INT unsigned not null auto_increment , primary key (`Id`), `Name` VARCHAR(40) , `Available` VARCHAR(40) default '1' ) CHARSET utf8", $silent);
+		setupTable('projects', "create table if not exists `projects` (   `Id` INT unsigned not null auto_increment , primary key (`Id`), `Name` VARCHAR(40) , `StartDate` DATE , `EndDate` DATE ) CHARSET utf8", $silent);
 
 
 		// save MD5

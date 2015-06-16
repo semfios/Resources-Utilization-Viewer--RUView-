@@ -102,17 +102,17 @@ function fix_table_responsive_width(){
 	}
 }
 
+function assignments_validateData(){
+	$j('.has-error').removeClass('has-error');
+	if($j('#Commitment').val() == ''){ modal_window({ message: '<div class="alert alert-danger"><?php echo addslashes($Translation['field not null']); ?></div>', title: "<?php echo addslashes($Translation['error:']); ?> Commitment", close: function(){ $j('[name=Commitment]').focus(); $j('[name=Commitment]').parents('.form-group').addClass('has-error'); } }); return false; };
+	return true;
+}
 function resources_validateData(){
 	$j('.has-error').removeClass('has-error');
 	return true;
 }
 function projects_validateData(){
 	$j('.has-error').removeClass('has-error');
-	return true;
-}
-function assignments_validateData(){
-	$j('.has-error').removeClass('has-error');
-	if($j('#Commitment').val() == ''){ modal_window({ message: '<div class="alert alert-danger"><?php echo addslashes($Translation['field not null']); ?></div>', title: "<?php echo addslashes($Translation['error:']); ?> Commitment", close: function(){ $j('[name=Commitment]').focus(); $j('[name=Commitment]').parents('.form-group').addClass('has-error'); } }); return false; };
 	return true;
 }
 function post(url, params, update, disable, loading){

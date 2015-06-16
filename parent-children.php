@@ -6,11 +6,55 @@
 	/*************************************/
 
 		$pcConfig = array(
+			'assignments' => array(   
+				'ProjectId' => array(   
+					'parent-table' => 'projects',
+					'parent-primary-key' => 'Id',
+					'child-primary-key' => 'Id',
+					'child-primary-key-index' => 0,
+					'tab-label' => 'Resources assigned',
+					'table-icon' => 'resources/table_icons/client_account_template.png',
+					'display-refresh' => true,
+					'display-add-new' => true,
+					'forced-where' => '',
+					'display-fields' => array(1 => 'Project', 3 => 'Resource', 4 => 'Commitment', 5 => 'Start Date', 6 => 'End Date'),
+					'display-field-names' => array(1 => 'ProjectId', 3 => 'ResourceId', 4 => 'Commitment', 5 => 'StartDate', 6 => 'EndDate'),
+					'sortable-fields' => array(1 => '2', 3 => '4', 4 => '5', 5 => '`assignments`.`StartDate`', 6 => '`assignments`.`EndDate`'),
+					'records-per-page' => 10,
+					'default-sort-by' => 6,
+					'default-sort-direction' => 'desc',
+					'open-detail-view-on-click' => true,
+					'display-page-selector' => true,
+					'show-page-progress' => true,
+					'template' => 'children-assignments',
+					'query' => "SELECT `assignments`.`Id` as 'Id', IF(    CHAR_LENGTH(`projects1`.`Name`), CONCAT_WS('',   `projects1`.`Name`), '') as 'ProjectId', IF(    CHAR_LENGTH(`projects1`.`StartDate`) || CHAR_LENGTH(`projects1`.`EndDate`), CONCAT_WS('',   `projects1`.`StartDate`, ' <b>to</b> ', `projects1`.`EndDate`), '') as 'ProjectDuration', IF(    CHAR_LENGTH(`resources1`.`Name`), CONCAT_WS('',   `resources1`.`Name`), '') as 'ResourceId', `assignments`.`Commitment` as 'Commitment', if(`assignments`.`StartDate`,date_format(`assignments`.`StartDate`,'%d/%m/%Y'),'') as 'StartDate', if(`assignments`.`EndDate`,date_format(`assignments`.`EndDate`,'%d/%m/%Y'),'') as 'EndDate' FROM `assignments` LEFT JOIN `projects` as projects1 ON `projects1`.`Id`=`assignments`.`ProjectId` LEFT JOIN `resources` as resources1 ON `resources1`.`Id`=`assignments`.`ResourceId` "
+				),
+				'ResourceId' => array(   
+					'parent-table' => 'resources',
+					'parent-primary-key' => 'Id',
+					'child-primary-key' => 'Id',
+					'child-primary-key-index' => 0,
+					'tab-label' => 'Projects assigned',
+					'table-icon' => 'resources/table_icons/client_account_template.png',
+					'display-refresh' => true,
+					'display-add-new' => true,
+					'forced-where' => '',
+					'display-fields' => array(1 => 'Project', 3 => 'Resource', 4 => 'Commitment', 5 => 'Start Date', 6 => 'End Date'),
+					'display-field-names' => array(1 => 'ProjectId', 3 => 'ResourceId', 4 => 'Commitment', 5 => 'StartDate', 6 => 'EndDate'),
+					'sortable-fields' => array(1 => '2', 3 => '4', 4 => '5', 5 => '`assignments`.`StartDate`', 6 => '`assignments`.`EndDate`'),
+					'records-per-page' => 10,
+					'default-sort-by' => 6,
+					'default-sort-direction' => 'desc',
+					'open-detail-view-on-click' => true,
+					'display-page-selector' => true,
+					'show-page-progress' => true,
+					'template' => 'children-assignments',
+					'query' => "SELECT `assignments`.`Id` as 'Id', IF(    CHAR_LENGTH(`projects1`.`Name`), CONCAT_WS('',   `projects1`.`Name`), '') as 'ProjectId', IF(    CHAR_LENGTH(`projects1`.`StartDate`) || CHAR_LENGTH(`projects1`.`EndDate`), CONCAT_WS('',   `projects1`.`StartDate`, ' <b>to</b> ', `projects1`.`EndDate`), '') as 'ProjectDuration', IF(    CHAR_LENGTH(`resources1`.`Name`), CONCAT_WS('',   `resources1`.`Name`), '') as 'ResourceId', `assignments`.`Commitment` as 'Commitment', if(`assignments`.`StartDate`,date_format(`assignments`.`StartDate`,'%d/%m/%Y'),'') as 'StartDate', if(`assignments`.`EndDate`,date_format(`assignments`.`EndDate`,'%d/%m/%Y'),'') as 'EndDate' FROM `assignments` LEFT JOIN `projects` as projects1 ON `projects1`.`Id`=`assignments`.`ProjectId` LEFT JOIN `resources` as resources1 ON `resources1`.`Id`=`assignments`.`ResourceId` "
+				)
+			),
 			'resources' => array(   
 			),
 			'projects' => array(   
-			),
-			'assignments' => array(   
 			)
 		);
 

@@ -24,6 +24,11 @@
 				$needsApproval=1;
 		}
 		###############################
+		$assignments_insert=checkPermissionVal('assignments_insert');
+		$assignments_view=checkPermissionVal('assignments_view');
+		$assignments_edit=checkPermissionVal('assignments_edit');
+		$assignments_delete=checkPermissionVal('assignments_delete');
+		###############################
 		$resources_insert=checkPermissionVal('resources_insert');
 		$resources_view=checkPermissionVal('resources_view');
 		$resources_edit=checkPermissionVal('resources_edit');
@@ -33,11 +38,6 @@
 		$projects_view=checkPermissionVal('projects_view');
 		$projects_edit=checkPermissionVal('projects_edit');
 		$projects_delete=checkPermissionVal('projects_delete');
-		###############################
-		$assignments_insert=checkPermissionVal('assignments_insert');
-		$assignments_view=checkPermissionVal('assignments_view');
-		$assignments_edit=checkPermissionVal('assignments_edit');
-		$assignments_delete=checkPermissionVal('assignments_delete');
 		###############################
 
 		// new group or old?
@@ -74,19 +74,19 @@
 			sql("update membership_groups set name='$name', description='$description', allowSignup='$allowSignup', needsApproval='$needsApproval' where groupID='$groupID'", $eo);
 
 			// reset then add group permissions
+			sql("delete from membership_grouppermissions where groupID='$groupID' and tableName='assignments'", $eo);
 			sql("delete from membership_grouppermissions where groupID='$groupID' and tableName='resources'", $eo);
 			sql("delete from membership_grouppermissions where groupID='$groupID' and tableName='projects'", $eo);
-			sql("delete from membership_grouppermissions where groupID='$groupID' and tableName='assignments'", $eo);
 		}
 
 		// add group permissions
 		if($groupID){
+			// table 'assignments'
+			sql("insert into membership_grouppermissions set groupID='$groupID', tableName='assignments', allowInsert='$assignments_insert', allowView='$assignments_view', allowEdit='$assignments_edit', allowDelete='$assignments_delete'", $eo);
 			// table 'resources'
 			sql("insert into membership_grouppermissions set groupID='$groupID', tableName='resources', allowInsert='$resources_insert', allowView='$resources_view', allowEdit='$resources_edit', allowDelete='$resources_delete'", $eo);
 			// table 'projects'
 			sql("insert into membership_grouppermissions set groupID='$groupID', tableName='projects', allowInsert='$projects_insert', allowView='$projects_view', allowEdit='$projects_edit', allowDelete='$projects_delete'", $eo);
-			// table 'assignments'
-			sql("insert into membership_grouppermissions set groupID='$groupID', tableName='assignments', allowInsert='$assignments_insert', allowView='$assignments_view', allowEdit='$assignments_edit', allowDelete='$assignments_delete'", $eo);
 		}
 
 		// redirect to group editing page
@@ -203,6 +203,28 @@
 						<td class="tdHeader"><div class="ColCaption">Edit</div></td>
 						<td class="tdHeader"><div class="ColCaption">Delete</div></td>
 						</tr>
+				<!-- assignments table -->
+					<tr>
+						<td class="tdCaptionCell" valign="top">Assignments</td>
+						<td class="tdCell" valign="top">
+							<input onMouseOver="stm(assignments_addTip, toolTipStyle);" onMouseOut="htm();" type="checkbox" name="assignments_insert" value="1" <?php echo ($assignments_insert ? "checked class=\"highlight\"" : ""); ?>>
+							</td>
+						<td class="tdCell">
+							<?php
+								echo htmlRadioGroup("assignments_view", $arrPermVal, $arrPermText, $assignments_view, "highlight");
+							?>
+							</td>
+						<td class="tdCell">
+							<?php
+								echo htmlRadioGroup("assignments_edit", $arrPermVal, $arrPermText, $assignments_edit, "highlight");
+							?>
+							</td>
+						<td class="tdCell">
+							<?php
+								echo htmlRadioGroup("assignments_delete", $arrPermVal, $arrPermText, $assignments_delete, "highlight");
+							?>
+							</td>
+						</tr>
 				<!-- resources table -->
 					<tr>
 						<td class="tdCaptionCell" valign="top">Resources</td>
@@ -244,28 +266,6 @@
 						<td class="tdCell">
 							<?php
 								echo htmlRadioGroup("projects_delete", $arrPermVal, $arrPermText, $projects_delete, "highlight");
-							?>
-							</td>
-						</tr>
-				<!-- assignments table -->
-					<tr>
-						<td class="tdCaptionCell" valign="top">Assignments</td>
-						<td class="tdCell" valign="top">
-							<input onMouseOver="stm(assignments_addTip, toolTipStyle);" onMouseOut="htm();" type="checkbox" name="assignments_insert" value="1" <?php echo ($assignments_insert ? "checked class=\"highlight\"" : ""); ?>>
-							</td>
-						<td class="tdCell">
-							<?php
-								echo htmlRadioGroup("assignments_view", $arrPermVal, $arrPermText, $assignments_view, "highlight");
-							?>
-							</td>
-						<td class="tdCell">
-							<?php
-								echo htmlRadioGroup("assignments_edit", $arrPermVal, $arrPermText, $assignments_edit, "highlight");
-							?>
-							</td>
-						<td class="tdCell">
-							<?php
-								echo htmlRadioGroup("assignments_delete", $arrPermVal, $arrPermText, $assignments_delete, "highlight");
 							?>
 							</td>
 						</tr>
