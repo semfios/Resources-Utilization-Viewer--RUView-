@@ -49,19 +49,19 @@
 	if($page<1){
 		$page=1;
 	}elseif($page>ceil($numRecords/$adminConfig['recordsPerPage']) && !$noResults){
-		redirect("pageViewRecords.php?page=".ceil($numRecords/$adminConfig['recordsPerPage']));
+		redirect("admin/pageViewRecords.php?page=".ceil($numRecords/$adminConfig['recordsPerPage']));
 	}
 
 	$start=($page-1)*$adminConfig['recordsPerPage'];
 
 ?>
-<h1>Data Records</h1>
+<div class="page-header"><h1>Data Records</h1></div>
 
-<table border="0" cellspacing="0" cellpadding="0">
+<table class="table table-striped">
 	<tr>
 		<td colspan="7" align="center">
 			<form method="get" action="pageViewRecords.php">
-				<table>
+				<table class="table">
 					<tr>
 						<td align="center">
 							Group
@@ -118,7 +118,7 @@
 <?php
 
 	$res=sql("select r.recID, r.memberID, g.name, r.tableName, r.dateAdded, r.dateUpdated, r.pkValue from membership_userrecords r left join membership_groups g on r.groupID=g.groupID $where $sortClause limit $start, ".$adminConfig['recordsPerPage'], $eo);
-	while($row=mysql_fetch_row($res)){
+	while($row=db_fetch_row($res)){
 		?>
 		<tr>
 			<td class="tdCaptionCell" align="left">
@@ -128,8 +128,8 @@
 			<td class="tdCell" align="left"><?php echo $row[1]; ?></td>
 			<td class="tdCell" align="left"><?php echo $row[2]; ?></td>
 			<td class="tdCell" align="left"><?php echo $row[3]; ?></td>
-			<td class="tdCell" align="left" <?php echo ($sort=='dateAdded' ? "style=\"background-color: #FFFFE0;\"" : "");?>><?php echo @date($adminConfig['PHPDateTimeFormat'], $row[4]); ?></td>
-			<td class="tdCell" align="left" <?php echo ($sort=='dateUpdated' ? "style=\"background-color: #FFFFE0;\"" : "");?>><?php echo @date($adminConfig['PHPDateTimeFormat'], $row[5]); ?></td>
+			<td class="tdCell <?php echo ($sort == 'dateAdded' ? 'warning' : '');?>" align="left"><?php echo @date($adminConfig['PHPDateTimeFormat'], $row[4]); ?></td>
+			<td class="tdCell <?php echo ($sort == 'dateUpdated' ? 'warning' : '');?>" align="left"><?php echo @date($adminConfig['PHPDateTimeFormat'], $row[5]); ?></td>
 			<td class="tdCell" align="left"><?php echo substr(getCSVData($row[3], $row[6]), 0, 40)." ... "; ?></td>
 			</tr>
 		<?php
@@ -138,16 +138,17 @@
 	<tr>
 		<td colspan="7">
 			<table width="100%" cellspacing="0">
+				<tr>
 				<td align="left" class="tdFooter">
 					<input type="button" onClick="window.location='pageViewRecords.php?groupID=<?php echo $groupID; ?>&memberID=<?php echo $memberID; ?>&tableName=<?php echo $tableName; ?>&page=<?php echo ($page>1 ? $page-1 : 1); ?>&sort=<?php echo $sort; ?>&sortDir=<?php echo $sortDir; ?>';" value="Previous">
 					</td>
 				<td align="center" class="tdFooter">
-					<?php echo "Displaying records ".($start+1)." to ".($start+mysql_num_rows($res))." of $numRecords"; ?>
+					<?php echo "Displaying records ".($start+1)." to ".($start+db_num_rows($res))." of $numRecords"; ?>
 					</td>
 				<td align="right" class="tdFooter">
 					<input type="button" onClick="window.location='pageViewRecords.php?groupID=<?php echo $groupID; ?>&memberID=<?php echo $memberID; ?>&tableName=<?php echo $tableName; ?>&page=<?php echo ($page<ceil($numRecords/$adminConfig['recordsPerPage']) ? $page+1 : ceil($numRecords/$adminConfig['recordsPerPage'])); ?>&sort=<?php echo $sort; ?>&sortDir=<?php echo $sortDir; ?>';" value="Next">
 					</td>
-			</td>
+			</tr><table></td>
 		</tr>
 	</table>
 

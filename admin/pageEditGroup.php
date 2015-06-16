@@ -44,7 +44,7 @@
 		if($_POST['groupID']==''){ // new group
 			// make sure group name is unique
 			if(sqlValue("select count(1) from membership_groups where name='$name'")){
-				echo "<div class=\"error\">Error: Group name already exists. You must choose a unique group name.</div>";
+				echo "<div class=\"alert alert-danger\">Error: Group name already exists. You must choose a unique group name.</div>";
 				include("$currDir/incFooter.php");
 			}
 
@@ -52,7 +52,7 @@
 			sql("insert into membership_groups set name='$name', description='$description', allowSignup='$allowSignup', needsApproval='$needsApproval'", $eo);
 
 			// get new groupID
-			$groupID=mysql_insert_id();
+			$groupID=db_insert_id(db_link());
 
 		}else{ // old group
 			// validate groupID
@@ -66,7 +66,7 @@
 
 			// make sure group name is unique
 			if(sqlValue("select count(1) from membership_groups where name='$name' and groupID!='$groupID'")){
-				echo "<div class=\"error\">Error: Group name already exists. You must choose a unique group name.</div>";
+				echo "<div class=\"alert alert-danger\">Error: Group name already exists. You must choose a unique group name.</div>";
 				include("$currDir/incFooter.php");
 			}
 
@@ -90,7 +90,7 @@
 		}
 
 		// redirect to group editing page
-		redirect("pageEditGroup.php?groupID=$groupID");
+		redirect("admin/pageEditGroup.php?groupID=$groupID");
 
 	}elseif($_GET['groupID']!=''){
 		// we have an edit request for a group
@@ -102,7 +102,7 @@
 	if($groupID!=''){
 		// fetch group data to fill in the form below
 		$res=sql("select * from membership_groups where groupID='$groupID'", $eo);
-		if($row=mysql_fetch_assoc($res)){
+		if($row=db_fetch_assoc($res)){
 			// get group data
 			$name=$row['name'];
 			$description=$row['description'];
@@ -110,7 +110,7 @@
 
 			// get group permissions for each table
 			$res=sql("select * from membership_grouppermissions where groupID='$groupID'", $eo);
-			while($row=mysql_fetch_assoc($res)){
+			while($row=db_fetch_assoc($res)){
 				$tableName=$row['tableName'];
 				$vIns=$tableName."_insert";
 				$vUpd=$tableName."_edit";
@@ -123,30 +123,30 @@
 			}
 		}else{
 			// no such group exists
-			echo "<div class=\"error\">Error: Group not found!</div>";
+			echo "<div class=\"alert alert-danger\">Error: Group not found!</div>";
 			$groupID=0;
 		}
 	}
 ?>
-<h1><?php echo ($groupID ? "Edit Group '$name'" : "Add New Group"); ?></h1>
+<div class="page-header"><h1><?php echo ($groupID ? "Edit Group '$name'" : "Add New Group"); ?></h1></div>
 <?php if($anonGroupID==$groupID){ ?>
-	<div class="status">Attention! This is the anonymous group.</div>
+	<div class="alert alert-warning">Attention! This is the anonymous group.</div>
 <?php } ?>
 <input type="checkbox" id="showToolTips" value="1" checked><label for="showToolTips">Show tool tips as mouse moves over options</label>
 <form method="post" action="pageEditGroup.php">
 	<input type="hidden" name="groupID" value="<?php echo $groupID; ?>">
-	<table border="0" cellspacing="0" cellpadding="0">
+	<div class="table-responsive"><table class="table table-striped">
 		<tr>
 			<td align="right" class="tdFormCaption" valign="top">
 				<div class="formFieldCaption">Group name</div>
 				</td>
 			<td align="left" class="tdFormInput">
 				<input type="text" name="name" <?php echo ($anonGroupID==$groupID ? "readonly" : ""); ?> value="<?php echo $name; ?>" size="20" class="formTextBox">
-				<br />
+				<br>
 				<?php if($anonGroupID==$groupID){ ?>
 					The name of the anonymous group is read-only here.
 				<?php }else{ ?>
-					If you name the group '<?php echo $adminConfig['anonymousGroup']; ?>', it will be considered the anonymous group<br />
+					If you name the group '<?php echo $adminConfig['anonymousGroup']; ?>', it will be considered the anonymous group<br>
 					that defines the permissions of guest visitors that do not log into the system.
 				<?php } ?>
 				</td>
@@ -187,7 +187,7 @@
 			</tr>
 		<tr>
 			<td colspan="2" class="tdFormHeader">
-				<table border="0" cellspacing="0" cellpadding="0" width="100%">
+				<table class="table table-striped">
 					<tr>
 						<td class="tdFormHeader" colspan="5"><h2>Table permissions for this group</h2></td>
 						</tr>
@@ -277,8 +277,20 @@
 				<input type="submit" name="saveChanges" value="Save changes">
 				</td>
 			</tr>
-		</table>
+		</table></div>
 </form>
+
+	<script>
+		$j(function(){
+			var highlight_selections = function(){
+				$j('input[type=radio]:checked').next().addClass('text-primary');
+				$j('input[type=radio]:not(:checked)').next().removeClass('text-primary');
+			}
+
+			$j('input[type=radio]').change(function(){ highlight_selections(); });
+			highlight_selections();
+		});
+	</script>
 
 
 <?php

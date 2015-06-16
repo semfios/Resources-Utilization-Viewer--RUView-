@@ -3,19 +3,49 @@
 	require("$currDir/incCommon.php");
 
 	// request to save changes?
-	if($_POST['saveChanges']!=''){
+	if($_REQUEST['saveChanges']!=''){
 		// validate data
-		$recID=intval($_POST['recID']);
-		$memberID=makeSafe(strtolower($_POST['memberID']));
-		$groupID=intval($_POST['groupID']);
+		$recID = intval($_REQUEST['recID']);
+		$memberID = makeSafe(strtolower($_REQUEST['memberID']));
+		$groupID = intval($_REQUEST['groupID']);
 		###############################
 
+		/* for ajax requests coming from the users' area, get the recID */
+		if(is_ajax()){
+			$tableName = $_REQUEST['t'];
+			$pkValue = $_REQUEST['pkValue'];
+
+			if(!in_array($tableName, array_keys(getTableList()))){
+				die('Invalid table.');
+			}
+
+			if(!$pkValue){
+				die('Invalid primary key value');
+			}
+
+			$recID = sqlValue("select recID from membership_userrecords where tableName='{$tableName}' and pkValue='" . makeSafe($pkValue) . "'");
+			if(!$recID){
+				die('Record not found ... if it was imported externally, try assigning an owner from the admin area.');
+			}
+
+			/* determine groupID if not provided */
+			if(!$groupID){
+				$groupID = sqlValue("select groupID from membership_users where memberID='{$memberID}'");
+				if(!$groupID) die('Invalid username');
+			}
+		}
+
 		// update ownership
-		$upQry="UPDATE `membership_userrecords` set memberID='$memberID', groupID='$groupID' WHERE recID='$recID'";
+		$upQry="UPDATE `membership_userrecords` set memberID='{$memberID}', groupID='{$groupID}' WHERE recID='{$recID}'";
 		sql($upQry, $eo);
 
+		if(is_ajax){
+			echo 'OK';
+			exit;
+		}
+
 		// redirect to member editing page
-		redirect("pageEditOwnership.php?recID=$recID");
+		redirect("admin/pageEditOwnership.php?recID=$recID");
 
 	}elseif($_GET['recID']!=''){
 		// we have an edit request for a member
@@ -27,7 +57,7 @@
 	if($recID!=''){
 		// fetch record data to fill in the form below
 		$res=sql("select * from membership_userrecords where recID='$recID'", $eo);
-		if($row=mysql_fetch_assoc($res)){
+		if($row=db_fetch_assoc($res)){
 			// get record data
 			$tableName=$row['tableName'];
 			$pkValue=$row['pkValue'];
@@ -37,16 +67,16 @@
 			$groupID=$row['groupID'];
 		}else{
 			// no such record exists
-			die("<div class=\"error\">Error: Record not found!</div>");
+			die("<div class=\"alert alert-danger\">Error: Record not found!</div>");
 		}
 	}else{
-		redirect("pageViewRecords.php");
+		redirect("admin/pageViewRecords.php");
 	}
 ?>
-<h1>Edit Record Ownership</h1>
+<div class="page-header"><h1>Edit Record Ownership</h1></div>
 <form method="post" action="pageEditOwnership.php">
 	<input type="hidden" name="recID" value="<?php echo $recID; ?>">
-	<table border="0" cellspacing="0" cellpadding="0">
+	<div class="table-responsive"><table class="table table-striped">
 		<tr>
 			<td align="right" class="tdFormCaption" valign="top">
 				<div class="formFieldCaption">Owner group</div>
@@ -67,7 +97,7 @@
 					echo htmlSQLSelect('memberID', "select lcase(memberID), lcase(memberID) from membership_users where groupID='$groupID' order by memberID", $memberID);
 				?>
 				<a href="#" onClick="window.location='pageViewRecords.php?memberID='+escape(document.getElementById('memberID').value);"><img src="images/data_icon.gif" alt="View all records by this member" title="View all records by this member" border="0"></a>
-				<br />If you want to switch ownership of this record to a member of another group,
+				<br>If you want to switch ownership of this record to a member of another group,
 				you must change the owner group and save changes first.
 				</td>
 			</tr>
@@ -110,14 +140,14 @@
 					if(!$res=sql("show fields from `$tableName`", $eo)){
 						errorMsg("Couldn't retrieve field list from '$tableName'");
 					}
-					while($row=mysql_fetch_assoc($res)){
+					while($row=db_fetch_assoc($res)){
 						$field[]=$row['Field'];
 					}
 
-					$res=sql("select * from `$tableName` where `$pkField`='$pkValue'", $eo);
-					if($row=mysql_fetch_assoc($res)){
+					$res=sql("select * from `$tableName` where `$pkField`='" . makeSafe($pkValue, false) . "'", $eo);
+					if($row=db_fetch_assoc($res)){
 						?>
-						<table border="0" cellspacing="0" cellpadding="0" align="center">
+						<table class="table table-striped">
 							<tr>
 								<td class="tdHeader"><div class="ColCaption">Field name</div></td>
 								<td class="tdHeader"><div class="ColCaption">Value</div></td>
@@ -152,7 +182,7 @@
 				<input type="submit" name="saveChanges" value="Save changes">
 				</td>
 			</tr>
-		</table>
+		</table></div>
 </form>
 
 

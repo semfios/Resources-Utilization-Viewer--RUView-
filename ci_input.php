@@ -585,7 +585,7 @@ class CI_Input {
 		* Note: Use rawurldecode() so it does not remove plus signs
 		*
 		*/
-		$str = rawurldecode($str);
+		//$str = rawurldecode($str);
 
 		/*
 		* Convert character entities to ASCII 
@@ -916,7 +916,7 @@ class CI_Input {
 	function _js_link_removal($match)
 	{
 		$attributes = $this->_filter_attributes(str_replace(array('<', '>'), '', $match[1]));
-		return str_replace($match[1], preg_replace("#href=.*?(alert\(|alert&\#40;|javascript\:|charset\=|window\.|document\.|\.cookie|<script|<xss|base64\s*,)#si", "", $attributes), $match[0]);
+		return str_replace($match[1], preg_replace("#href=.*?(alert\(|alert&\#40;|javascript\:|javascript\s*&colon|charset\=|window\.|document\.|\.cookie|<script|<xss|base64\s*,)#si", "", $attributes), $match[0]);
 	}
 
 	/**
@@ -934,7 +934,7 @@ class CI_Input {
 	function _js_img_removal($match)
 	{
 		$attributes = $this->_filter_attributes(str_replace(array('<', '>'), '', $match[1]));
-		return str_replace($match[1], preg_replace("#src=.*?(alert\(|alert&\#40;|javascript\:|charset\=|window\.|document\.|\.cookie|<script|<xss|base64\s*,)#si", "", $attributes), $match[0]);
+		return str_replace($match[1], preg_replace("#src=.*?(alert\(|alert&\#40;|javascript\:|javascript\s*&colon|charset\=|window\.|document\.|\.cookie|<script|<xss|base64\s*,)#si", "", $attributes), $match[0]);
 	}
 
 	// --------------------------------------------------------------------

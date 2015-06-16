@@ -16,7 +16,7 @@
 		getCSVData($tn, $pkValue, $stripTag=true)
 		errorMsg($msg)
 		redirect($URL, $absolute=FALSE)
-		htmlRadioGroup($name, $arrValue, $arrCaption, $selectedValue, $selClass="", $class="", $separator="<br />")
+		htmlRadioGroup($name, $arrValue, $arrCaption, $selectedValue, $selClass="", $class="", $separator="<br>")
 		htmlSelect($name, $arrValue, $arrCaption, $selectedValue, $class="", $selectedClass="")
 		htmlSQLSelect($name, $sql, $selectedValue, $class="", $selectedClass="")
 		isEmail($email) -- returns $email if valid or false otherwise.
@@ -27,18 +27,25 @@
 		toBytes($val)
 		convertLegacyOptions($CSVList)
 		getValueGivenCaption($query, $caption)
+		undo_magic_quotes($str)
+		time24($t) -- return time in 24h format
+		time12($t) -- return time in 12h format
+		application_url($page) -- return absolute URL of provided page
+		is_ajax() -- return true if this is an ajax request, false otherwise
+		array_trim($arr) -- recursively trim provided value/array
+		csrf_token($validate) -- csrf-proof a form
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	*/
 	########################################################################
 
 	#########################################################
 	if(!function_exists('getTableList')){
-		function getTableList(){
-			$arrTables=array(
-				"resources"=>"Resources",
-				"projects"=>"Projects",
-				"assignments"=>"Assignments"
-				);
+		function getTableList($skip_authentication = false){
+			$arrTables = array(   
+				'resources' => 'Resources',
+				'projects' => 'Projects',
+				'assignments' => 'Assignments'
+			);
 
 			return $arrTables;
 		}
@@ -154,15 +161,10 @@
 		return TRUE;
 	}
 	########################################################################
-	function makeSafe($string){
-		$string=(get_magic_quotes_gpc() ? stripslashes($string) : $string);
-		if(function_exists('mysql_real_escape_string')){
-			// send a trivial query to initiate mysql connection
-			sql("select (1+1) from membership_groups limit 1", $eo);
-			return mysql_real_escape_string($string);
-		}else{
-			return mysql_escape_string($string);
-		}
+	function makeSafe($string, $is_gpc = true){
+		if($is_gpc) $string = (get_magic_quotes_gpc() ? stripslashes($string) : $string);
+		if(!db_link()){ sql("select 1+1", $eo); }
+		return db_escape($string);
 	}
 	########################################################################
 	function checkPermissionVal($pvn){
@@ -178,32 +180,26 @@
 	########################################################################
 	if(!function_exists('sql')){
 		function sql($statment, &$o){
-			static $connected=FALSE; // would be set to TRUE on successful connection
+			static $connected = false, $db_link; // $connect would be set to true on successful connection
 
 			if(!$connected){
-				// get db connection data from config file
-				@require(dirname(__FILE__)."/../config.php");
-
 				/****** Connect to MySQL ******/
-				if(!mysql_connect($dbServer, $dbUsername, $dbPassword)){
-					echo "<div class=\"error\">Couldn't connect to MySQL at '$dbServer'.</div>";
+				if(!($db_link = @db_connect(config('dbServer'), config('dbUsername'), config('dbPassword')))){
+					echo "<div class=\"alert alert-danger\">Couldn't connect to MySQL at '" . config('dbServer') . "'. You might need to re-configure this application. You can do so by manually editing the config.php file, or by deleting it to run the setup wizard.</div>";
 					exit;
 				}
-
-				/****** Connection Charset ********/
-				@mysql_query("SET NAMES 'latin1'");
 
 				/****** Select DB ********/
-				if(!mysql_select_db($dbDatabase)){
-					echo "<div class=\"error\">Couldn't connect to the database '$dbDatabase'.</div>";
+				if(!db_select_db(config('dbDatabase'), $db_link)){
+					echo "<div class=\"alert alert-danger\">Couldn't connect to the database '" . config('dbDatabase') . "'.</div>";
 					exit;
 				}
 
-				$connected=TRUE;
+				$connected = true;
 			}
 
-			if(!$result = @mysql_query($statment)){
-				echo "An error occured while attempting to execute:<br /><pre>".htmlspecialchars($statment)."</pre><br />MySQL said:<br /><pre>".mysql_error()."</pre>";
+			if(!$result = @db_query($statment)){
+				echo "An error occured while attempting to execute:<br><pre>".htmlspecialchars($statment)."</pre><br>MySQL said:<br><pre>".db_error(db_link())."</pre>";
 				exit;
 			}
 
@@ -216,7 +212,7 @@
 		if(!$res=sql($statment, $eo)){
 			return FALSE;
 		}
-		if(!$row=mysql_fetch_row($res)){
+		if(!$row=db_fetch_row($res)){
 			return FALSE;
 		}
 		return $row[0];
@@ -227,7 +223,7 @@
 		// if not, it returns FALSE
 		// if logged, it returns the user id
 
-		global $adminConfig;
+		$adminConfig = config('adminConfig');
 
 		if($_SESSION['adminUsername']!=''){
 			return $_SESSION['adminUsername'];
@@ -244,12 +240,14 @@
 		// if valid, registers the username in a session and returns true
 		// else, return FALSE and destroys session
 
-		require(dirname(__FILE__)."/incConfig.php");
-		if($username!=$adminConfig['adminUsername'] || md5($password)!=$adminConfig['adminPassword']){
+		$adminConfig = config('adminConfig');
+		if($username != $adminConfig['adminUsername'] || md5($password) != $adminConfig['adminPassword']){
 			return FALSE;
 		}
 
-		$_SESSION['adminUsername']=$username;
+		$_SESSION['adminUsername'] = $username;
+		$_SESSION['memberGroupID'] = sqlValue("select groupID from membership_users where memberID='" . makeSafe($username) ."'");
+		$_SESSION['memberID'] = $username;
 		return TRUE;
 	}
 	########################################################################
@@ -272,7 +270,7 @@
 			return FALSE;
 		}
 
-		while($row=mysql_fetch_assoc($res)){
+		while($row=db_fetch_assoc($res)){
 			if($row['Key']=='PRI'){
 				return $row['Field'];
 			}
@@ -291,12 +289,12 @@
 		if(!$res=sql("show fields from `$tn`", $eo)){
 			return "";
 		}
-		while($row=mysql_fetch_assoc($res)){
+		while($row=db_fetch_assoc($res)){
 			$csvFieldList.="`{$row['Field']}`,";
 		}
 		$csvFieldList=substr($csvFieldList, 0, -1);
 
-		$csvData=sqlValue("select CONCAT_WS(', ', $csvFieldList) from `$tn` where `$pkField`='$pkValue'");
+		$csvData=sqlValue("select CONCAT_WS(', ', $csvFieldList) from `$tn` where `$pkField`='" . makeSafe($pkValue, false) . "'");
 
 		return ($stripTags ? strip_tags($csvData) : $csvData);
 	}
@@ -306,20 +304,15 @@
 	}
 	########################################################################
 	function redirect($URL, $absolute=FALSE){
-		$host   = $_SERVER['HTTP_HOST'];
-		$uri    = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-		$http   = (strtolower($_SERVER['HTTPS']) == 'on' ? 'https:' : 'http:');
-		$fullURL=($absolute ? "" : "$http//$host$uri/")."$URL";
-		if(!headers_sent()){
-			header("Location: $fullURL");
-		}else{
-			echo "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0;url=$fullURL\">";
-			echo "<br /><br /><a href=\"$fullURL\">Click here</a> if you aren't automatically redirected.";
-		}
+		$fullURL = ($absolute ? $URL : application_url($URL));
+		if(!headers_sent()) header("Location: $fullURL");
+
+		echo "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0;url=$fullURL\">";
+		echo "<br><br><a href=\"$fullURL\">Click here</a> if you aren't automatically redirected.";
 		exit;
 	}
 	########################################################################
-	function htmlRadioGroup($name, $arrValue, $arrCaption, $selectedValue, $selClass="", $class="", $separator="<br />"){
+	function htmlRadioGroup($name, $arrValue, $arrCaption, $selectedValue, $selClass="", $class="", $separator="<br>"){
 		if(is_array($arrValue)){
 			for($i=0; $i<count($arrValue); $i++){
 				$out.="<span onMouseOver=\"stm(".$name.$arrValue[$i]."Tip, toolTipStyle);\"  onMouseOut=\"htm();\" class=\"".($arrValue[$i]==$selectedValue ? $selClass :$class)."\"><input type=\"radio\" id=\"$name$i\" name=\"$name\" value=\"".$arrValue[$i]."\"".($arrValue[$i]==$selectedValue ? " checked" : "")."> <label for=\"$name$i\">".$arrCaption[$i]."</label></span>".$separator;
@@ -346,7 +339,7 @@
 		$arrVal[]='';
 		$arrCap[]='';
 		if($res=sql($sql, $eo)){
-			while($row=mysql_fetch_row($res)){
+			while($row=db_fetch_row($res)){
 				$arrVal[]=$row[0];
 				$arrCap[]=$row[1];
 			}
@@ -365,7 +358,7 @@
 	}
 	########################################################################
 	function notifyMemberApproval($memberID){
-		require(dirname(__FILE__)."/incConfig.php");
+		$adminConfig = config('adminConfig');
 		$memberID=strtolower($memberID);
 
 		$email=sqlValue("select email from membership_users where lcase(memberID)='$memberID'");
@@ -380,60 +373,149 @@
 	}
 	########################################################################
 	function setupMembership(){
-		require(dirname(__FILE__)."/incConfig.php");
-		// fall-back defaults
-		if(!$adminConfig['anonymousGroup']) $adminConfig['anonymousGroup']='anonymous';
-		if(!$adminConfig['anonymousMember']) $adminConfig['anonymousMember']='guest';
-		if(!$adminConfig['adminUsername']) $adminConfig['adminUsername']='admin';
+		// run once per request
+		static $executed = false;
+		if($executed) return;
+		$executed = true;
+
+		$adminConfig = config('adminConfig');
+		$today = @date('Y-m-d');
+
+		$membership_tables = array(
+			'membership_groups' => "CREATE TABLE IF NOT EXISTS membership_groups (groupID int unsigned NOT NULL auto_increment, name varchar(20), description text, allowSignup tinyint, needsApproval tinyint, PRIMARY KEY (groupID))",
+			'membership_users' => "CREATE TABLE IF NOT EXISTS membership_users (memberID varchar(20) NOT NULL, passMD5 varchar(40), email varchar(100), signupDate date, groupID int unsigned, isBanned tinyint, isApproved tinyint, custom1 text, custom2 text, custom3 text, custom4 text, comments text, PRIMARY KEY (memberID))",
+			'membership_grouppermissions' => "CREATE TABLE IF NOT EXISTS membership_grouppermissions (permissionID int unsigned NOT NULL auto_increment,  groupID int, tableName varchar(100), allowInsert tinyint, allowView tinyint NOT NULL DEFAULT '0', allowEdit tinyint NOT NULL DEFAULT '0', allowDelete tinyint NOT NULL DEFAULT '0', PRIMARY KEY (permissionID))",
+			'membership_userrecords' => "CREATE TABLE IF NOT EXISTS membership_userrecords (recID bigint unsigned NOT NULL auto_increment, tableName varchar(100), pkValue varchar(255), memberID varchar(20), dateAdded bigint unsigned, dateUpdated bigint unsigned, groupID int, PRIMARY KEY (recID))",
+			'membership_userpermissions' => "CREATE TABLE IF NOT EXISTS membership_userpermissions (permissionID int unsigned NOT NULL auto_increment,  memberID varchar(20) NOT NULL, tableName varchar(100), allowInsert tinyint, allowView tinyint NOT NULL DEFAULT '0', allowEdit tinyint NOT NULL DEFAULT '0', allowDelete tinyint NOT NULL DEFAULT '0', PRIMARY KEY (permissionID))" 
+		);
+
+		// get db tables
+		$tables = array();
+		$res = sql("show tables", $eo);
+		while($row = db_fetch_array($res)) $tables[] = $row[0];
 
 		// check if membership tables exist or not
-		sql("CREATE TABLE IF NOT EXISTS membership_groups (groupID int unsigned NOT NULL auto_increment, name varchar(20), description text, allowSignup tinyint, needsApproval tinyint, PRIMARY KEY (groupID))", $eo);
-		sql("CREATE TABLE IF NOT EXISTS membership_users (memberID varchar(20) NOT NULL, passMD5 varchar(40), email varchar(100), signupDate date, groupID int unsigned, isBanned tinyint, isApproved tinyint, custom1 text, custom2 text, custom3 text, custom4 text, comments text, PRIMARY KEY (memberID))", $eo);
-		sql("CREATE TABLE IF NOT EXISTS membership_grouppermissions (permissionID int unsigned NOT NULL auto_increment,  groupID int, tableName varchar(100), allowInsert tinyint, allowView tinyint NOT NULL DEFAULT '0', allowEdit tinyint NOT NULL DEFAULT '0', allowDelete tinyint NOT NULL DEFAULT '0', PRIMARY KEY (permissionID))", $eo);
-		sql("CREATE TABLE IF NOT EXISTS membership_userrecords (recID bigint unsigned NOT NULL auto_increment, tableName varchar(100), pkValue varchar(255), memberID varchar(20), dateAdded bigint unsigned, dateUpdated bigint unsigned, groupID int, PRIMARY KEY (recID))", $eo);
-		sql("CREATE TABLE IF NOT EXISTS membership_userpermissions (permissionID int unsigned NOT NULL auto_increment,  memberID varchar(20) NOT NULL, tableName varchar(100), allowInsert tinyint, allowView tinyint NOT NULL DEFAULT '0', allowEdit tinyint NOT NULL DEFAULT '0', allowDelete tinyint NOT NULL DEFAULT '0', PRIMARY KEY (permissionID))", $eo);
+		foreach($membership_tables as $tn => $tdef){
+			if(!in_array($tn, $tables)){
+				sql($tdef, $eo);
+			}
+		}
+
+		// check membership_users definition
+		$membership_users = array();
+		$res = sql("show columns from membership_users", $eo);
+		while($row = db_fetch_assoc($res)) $membership_users[$row['Field']] = $row;
+
+		if(!in_array('pass_reset_key', array_keys($membership_users))) @db_query("ALTER TABLE membership_users ADD COLUMN pass_reset_key VARCHAR(100)");
+		if(!in_array('pass_reset_expiry', array_keys($membership_users))) @db_query("ALTER TABLE membership_users ADD COLUMN pass_reset_expiry INT UNSIGNED");
+		if(!$membership_users['groupID']['Key']) @db_query("ALTER TABLE membership_users ADD INDEX groupID (groupID)");
 
 		// create membership indices if not existing
-		@mysql_query("ALTER TABLE membership_userrecords ADD INDEX pkValue (pkValue)");
-		@mysql_query("ALTER TABLE membership_userrecords ADD INDEX tableName (tableName)");
+		$membership_userrecords = array();
+		$res = sql("show keys from membership_userrecords", $eo);
+		while($row = db_fetch_assoc($res)) $membership_userrecords[$row['Key_name']][$row['Seq_in_index']] = $row;
 
+		if(!$membership_userrecords['pkValue'][1]) @db_query("ALTER TABLE membership_userrecords ADD INDEX pkValue (pkValue)");
+		if(!$membership_userrecords['tableName'][1]) @db_query("ALTER TABLE membership_userrecords ADD INDEX tableName (tableName)");
+		if(!$membership_userrecords['memberID'][1]) @db_query("ALTER TABLE membership_userrecords ADD INDEX memberID (memberID)");
+		if(!$membership_userrecords['groupID'][1]) @db_query("ALTER TABLE membership_userrecords ADD INDEX groupID (groupID)");
+		if(!$membership_userrecords['tableName_pkValue'][1] || !$membership_userrecords['tableName_pkValue'][2]) @db_query("ALTER IGNORE TABLE membership_userrecords ADD UNIQUE INDEX tableName_pkValue (tableName, pkValue)");
 
-		// check if anonymous group and user exist. If not, create them
-		$anonGroupID=sqlValue("select groupID from membership_groups where name='".$adminConfig['anonymousGroup']."'");
-		if(!$anonGroupID){
-			sql("insert into membership_groups set name='".$adminConfig['anonymousGroup']."', allowSignup=0, needsApproval=0, description='Anonymous group created automatically on ".@date("Y-m-d")."'", $eo);
-			$anonGroupID=mysql_insert_id();
+		// retreive anonymous and admin groups and their permissions
+		$anon_group = $adminConfig['anonymousGroup'];
+		$anon_user = strtolower($adminConfig['anonymousMember']);
+		$admin_group = 'Admins';
+		$admin_user = strtolower($adminConfig['adminUsername']);
+		$groups_permissions = array();
+		$res = sql(
+			"select g.groupID, g.name, gp.tableName, gp.allowInsert, gp.allowView, gp.allowEdit, gp.allowDelete " .
+			"from membership_groups g left join membership_grouppermissions gp on g.groupID=gp.groupID " .
+			"where g.name='" . makeSafe($admin_group) . "' or g.name='" . makeSafe($anon_group) . "' " .
+			"order by g.groupID, gp.tableName", $eo
+		);
+		while($row = db_fetch_assoc($res)) $groups_permissions[] = $row;
 
-			// set anonymous group permissions
-			sql("insert into membership_grouppermissions set groupID='$anonGroupID', tableName='resources', allowInsert=0, allowView=0, allowEdit=0, allowDelete=0", $eo);
-			sql("insert into membership_grouppermissions set groupID='$anonGroupID', tableName='projects', allowInsert=0, allowView=0, allowEdit=0, allowDelete=0", $eo);
-			sql("insert into membership_grouppermissions set groupID='$anonGroupID', tableName='assignments', allowInsert=0, allowView=0, allowEdit=0, allowDelete=0", $eo);
-		}
-		$anonMemberID=sqlValue("select lcase(memberID) from membership_users where lcase(memberID)='".strtolower($adminConfig['anonymousMember'])."' and groupID='$anonGroupID'");
-		if(!$anonMemberID){
-			sql("insert into membership_users set memberID='".strtolower($adminConfig['anonymousMember'])."', signUpDate='".@date('Y-m-d')."', groupID='$anonGroupID', isBanned=0, isApproved=1, comments='Anonymous member created automatically on ".@date('Y-m-d')."'", $eo);
-		}
-
-		// check if admin group and user exist. If not, create them
-		$adminGroupID=sqlValue("select groupID from membership_groups where name='Admins'");
-		if(!$adminGroupID){
-			sql("insert into membership_groups set name='Admins', allowSignup=0, needsApproval=1, description='Admin group created automatically on ".@date('Y-m-d')."'", $eo);
-			$adminGroupID=mysql_insert_id();
-		}
-
-		if(sqlValue("select count(1) from membership_grouppermissions where groupID='$adminGroupID'")<3){
-			sql("delete from membership_grouppermissions where groupID='$adminGroupID'", $eo);
-			// set admin group permissions
-			sql("insert into membership_grouppermissions set groupID='$adminGroupID', tableName='resources', allowInsert=1, allowView=3, allowEdit=3, allowDelete=3", $eo);
-			sql("insert into membership_grouppermissions set groupID='$adminGroupID', tableName='projects', allowInsert=1, allowView=3, allowEdit=3, allowDelete=3", $eo);
-			sql("insert into membership_grouppermissions set groupID='$adminGroupID', tableName='assignments', allowInsert=1, allowView=3, allowEdit=3, allowDelete=3", $eo);
-		}
-		$adminMemberID=sqlValue("select lcase(memberID) from membership_users where lcase(memberID)='".strtolower($adminConfig['adminUsername'])."' and groupID='$adminGroupID'");
-		if(!$adminMemberID){
-			sql("insert into membership_users set memberID='".strtolower($adminConfig['adminUsername'])."', passMD5='".$adminConfig['adminPassword']."', email='".$adminConfig['senderEmail']."', signUpDate='".@date('Y-m-d')."', groupID='$adminGroupID', isBanned=0, isApproved=1, comments='Admin member created automatically on ".@date('Y-m-d')."'", $eo);
+		// check anonymous group and user and create if necessary
+		$anon_group_id = false;
+		foreach($groups_permissions as $group){
+			if($group['name'] == $anon_group){
+				$anon_group_id = $group['groupID'];
+				break;
+			}
 		}
 
+		if(!$anon_group_id){
+			sql("insert into membership_groups set name='" . makeSafe($anon_group) . "', allowSignup=0, needsApproval=0, description='Anonymous group created automatically on " . @date("Y-m-d") . "'", $eo);
+			$anon_group_id = db_insert_id();
+		}
+
+		if($anon_group_id){
+			$anon_user_db = sqlValue("select lcase(memberID) from membership_users where lcase(memberID)='" . makeSafe($anon_user) . "' and groupID='{$anon_group_id}'");
+			if(!$anon_user_db || $anon_user_db != $anon_user){
+				sql("delete from membership_users where groupID='{$anon_group_id}'", $eo);
+				sql("insert into membership_users set memberID='" . makeSafe($anon_user) . "', signUpDate='{$today}', groupID='{$anon_group_id}', isBanned=0, isApproved=1, comments='Anonymous member created automatically on {$today}'", $eo);
+			}
+		}
+
+		// check admin group and user and create if necessary
+		$admin_group_id = false;
+		foreach($groups_permissions as $group){
+			if($group['name'] == $admin_group){
+				$admin_group_id = $group['groupID'];
+				break;
+			}
+		}
+
+		if(!$admin_group_id){
+			sql("insert into membership_groups set name='" . makeSafe($admin_group) . "', allowSignup=0, needsApproval=1, description='Admin group created automatically on {$today}'", $eo);
+			$admin_group_id = db_insert_id();
+		}
+
+		if($admin_group_id){
+			// check that admins can access all tables
+			$all_tables = getTableList(true);
+			$tables_ok = $perms_ok = array();
+			foreach($all_tables as $tn => $tc) $tables_ok[$tn] = $perms_ok[$tn] = false;
+
+			foreach($groups_permissions as $group){
+				if($group['name'] == $admin_group){
+					if(isset($tables_ok[$group['tableName']])){
+						$tables_ok[$group['tableName']] = true;
+						if($group['allowInsert'] == 1 && $group['allowDelete'] == 3 && $group['allowEdit'] == 3 && $group['allowView'] == 3){
+							$perms_ok[$group['tableName']] = true;
+						}
+					}
+				}
+			}
+
+			// if any table has no record in Admins permissions, create one for it
+			$grant_sql = array();
+			foreach($tables_ok as $tn => $status){
+				if(!$status) $grant_sql[] = "({$admin_group_id}, '{$tn}')";
+			}
+
+			if(count($grant_sql)){
+				sql("insert into membership_grouppermissions (groupID, tableName) values " . implode(',', $grant_sql), $eo);
+			}
+
+			// check admin permissions and update if necessary
+			$perms_sql = array();
+			foreach($perms_ok as $tn => $status){
+				if(!$status) $perms_sql[] = "'{$tn}'";
+			}
+
+			if(count($perms_sql)){
+				sql("update membership_grouppermissions set allowInsert=1, allowView=3, allowEdit=3, allowDelete=3 where groupID={$admin_group_id} and tableName in (" . implode(',', $perms_sql) . ")", $eo);
+			}
+
+			// check if super admin is stored in the users table and add him if not
+			$admin_user_exists = sqlValue("select count(1) from membership_users where lcase(memberID)='" . makeSafe($admin_user)."' and groupID='{$admin_group_id}'");
+			if(!$admin_user_exists){
+				sql("insert into membership_users set memberID='" . makeSafe($admin_user) . "', passMD5='{$adminConfig['adminPassword']}', email='{$adminConfig['senderEmail']}', signUpDate='{$today}', groupID='{$admin_group_id}', isBanned=0, isApproved=1, comments='Admin member created automatically on {$today}'", $eo);
+			}
+		}
 	}
+
 	########################################################################
 	function thisOr($this, $or='&nbsp;'){
 		return ($this!='' ? $this : $or);
@@ -524,4 +606,90 @@
 		$caption=makeSafe($caption);
 		return sqlValue("SELECT $m[1] FROM $m[3] $where $m[2]='$caption'");
 	}
-?>
+	########################################################################
+	function undo_magic_quotes($str){
+		return (get_magic_quotes_gpc() ? stripslashes($str) : $str);
+	}
+	########################################################################
+	function time24($t = false){
+		if($t === false) $t = time();
+		return date('H:i:s', strtotime($t));
+	}
+	########################################################################
+	function time12($t = false){
+		if($t === false) $t = time();
+		return date('h:i:s A', strtotime($t));
+	}
+	########################################################################
+	function application_url($page = ''){
+		$host = $_SERVER['HTTP_HOST'];
+		$uri = dirname($_SERVER['PHP_SELF']);
+
+		/* app folder name (without the ending /admin part) */
+		$app_folder_is_admin = false;
+		$app_folder = substr(dirname(__FILE__), 0, -6);
+		if(substr($app_folder, -6, 6) == '/admin' || substr($app_folder, -6, 6) == '\\admin')
+			$app_folder_is_admin = true;
+
+		if(substr($uri, -12, 12) == '/admin/admin') $uri = substr($uri, 0, -6);
+		elseif(substr($uri, -6, 6) == '/admin' && !$app_folder_is_admin) $uri = substr($uri, 0, -6);
+		elseif($uri == '/') $uri = '';
+
+		$http = (strtolower($_SERVER['HTTPS']) == 'on' ? 'https:' : 'http:');
+
+		return "{$http}//{$host}{$uri}/{$page}";
+	}
+	########################################################################
+	function is_ajax(){
+		return (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest');
+	}
+	########################################################################
+	function array_trim($arr){
+		if(!is_array($arr)) return trim($arr);
+		return array_map('array_trim', $arr);
+	}
+	########################################################################
+	function is_allowed_username($username){
+		$username = trim(strtolower($username));
+		if(!preg_match('/^[a-z0-9][a-z0-9 _.@]{3,19}$/', $username) || preg_match('/(@@|  |\.\.|___)/', $username)) return false;
+		if(sqlValue("select count(1) from membership_users where lcase(memberID)='{$username}'")) return false;
+		return $username;
+	}
+	########################################################################
+	/*
+		if called without parameters, looks for a non-expired token in the user's session (or creates one if
+		none found) and returns html code to insert into the form to be protected.
+
+		if set to true, validates token sent in $_REQUEST against that stored in the session
+		and returns true if valid or false if invalid, absent or expired.
+
+		usage:
+			1. in a new form that needs csrf proofing: echo csrf_token();
+			2. when validating a submitted form: if(!csrf_token(true)){ reject_submission_somehow(); }
+	*/
+	function csrf_token($validate = false){
+		$token_age = 30 * 60;
+		/* retrieve token from session */
+		$csrf_token = (isset($_SESSION['csrf_token']) ? $_SESSION['csrf_token'] : false);
+		$csrf_token_expiry = (isset($_SESSION['csrf_token_expiry']) ? $_SESSION['csrf_token_expiry'] : false);
+
+		if(!$validate){
+			/* create a new token if necessary */
+			if($csrf_token_expiry < time() || !$csrf_token){
+				$csrf_token = md5(uniqid(rand(), true));
+				$csrf_token_expiry = time() + $token_age;
+				$_SESSION['csrf_token'] = $csrf_token;
+				$_SESSION['csrf_token_expiry'] = $csrf_token_expiry;
+			}
+
+			return '<input type="hidden" id="csrf_token" name="csrf_token" value="' . $csrf_token . '">';
+		}
+
+		/* validate submitted token */
+		$user_token = (isset($_REQUEST['csrf_token']) ? $_REQUEST['csrf_token'] : false);
+		if($csrf_token_expiry < time() || !$user_token || $user_token != $csrf_token){
+			return false;
+		}
+
+		return true;
+	}

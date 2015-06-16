@@ -70,19 +70,19 @@
 	if($page<1){
 		$page=1;
 	}elseif($page>ceil($numMembers/$adminConfig['membersPerPage']) && !$noResults){
-		redirect("pageViewMembers.php?page=".ceil($numMembers/$adminConfig['membersPerPage']));
+		redirect("admin/pageViewMembers.php?page=".ceil($numMembers/$adminConfig['membersPerPage']));
 	}
 
 	$start=($page-1)*$adminConfig['membersPerPage'];
 
 ?>
-<h1>Members</h1>
+<div class="page-header"><h1>Members</h1></div>
 
-<table border="0" cellspacing="0" cellpadding="0">
+<table class="table table-striped">
 	<tr>
 		<td colspan="10" align="center">
 			<form method="get" action="pageViewMembers.php">
-				<table>
+				<table class="table table-striped">
 					<tr>
 						<td valign="top" align="center">
 							<input type="hidden" name="page" value="1">
@@ -133,7 +133,7 @@
 <?php
 
 	$res=sql("select lcase(m.memberID), g.name, DATE_FORMAT(m.signupDate, '".$adminConfig['MySQLDateFormat']."'), m.custom1, m.custom2, m.custom3, m.custom4, m.isBanned, m.isApproved from membership_users m left join membership_groups g on m.groupID=g.groupID $where order by m.signupDate limit $start, ".$adminConfig['membersPerPage'], $eo);
-	while($row=mysql_fetch_row($res)){
+	while($row=db_fetch_row($res)){
 		?>
 		<tr>
 			<td class="tdCaptionCell" align="left">
@@ -174,16 +174,17 @@
 	<tr>
 		<td colspan="10">
 			<table width="100%" cellspacing="0">
+				<tr>
 				<td align="left" class="tdFooter">
 					<input type="button" onClick="window.location='pageViewMembers.php?searchMembers=<?php echo $searchHTML; ?>&groupID=<?php echo $groupID; ?>&status=<?php echo $status; ?>&searchField=<?php echo $searchField; ?>&page=<?php echo ($page>1 ? $page-1 : 1); ?>';" value="Previous">
 					</td>
 				<td align="center" class="tdFooter">
-					<?php echo "Displaying members ".($start+1)." to ".($start+mysql_num_rows($res))." of $numMembers"; ?>
+					<?php echo "Displaying members ".($start+1)." to ".($start+db_num_rows($res))." of $numMembers"; ?>
 					</td>
 				<td align="right" class="tdFooter">
 					<input type="button" onClick="window.location='pageViewMembers.php?searchMembers=<?php echo $searchHTML; ?>&groupID=<?php echo $groupID; ?>&status=<?php echo $status; ?>&searchField=<?php echo $searchField; ?>&page=<?php echo ($page<ceil($numMembers/$adminConfig['membersPerPage']) ? $page+1 : ceil($numMembers/$adminConfig['membersPerPage'])); ?>';" value="Next">
 					</td>
-			</td>
+			</tr></table></td>
 		</tr>
 	<tr>
 		<td colspan="10">
@@ -191,9 +192,9 @@
 		</tr>
 	<tr>
 		<td colspan="10">
-			<table width="100%">
+			<table class="table">
 				<tr>
-					<td colspan="2"><br /><b>Key:</b></td>
+					<td colspan="2"><br><b>Key:</b></td>
 					</tr>
 				<tr>
 					<td><img src="images/edit_icon.gif"> Edit member details.</td>

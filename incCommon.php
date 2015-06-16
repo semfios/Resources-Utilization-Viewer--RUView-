@@ -1,39 +1,20 @@
 <?php
-	error_reporting(E_ALL ^ E_NOTICE);
+	define('maxSortBy', 4);
+	define('empty_lookup_value', '{empty_value}');
+
+	error_reporting(E_ERROR | E_WARNING | E_PARSE);
 	if(function_exists('set_magic_quotes_runtime')) @set_magic_quotes_runtime(0);
 	ob_start();
 
-	// check if setup was performed or not yet
 	$currDir=dirname(__FILE__);
-	$setupStyle="border: solid 1px red; background-color: #FFFFE0; color: red; font-size: 16px; font-family: arial; font-weight: bold; padding: 10px; width:400px; text-align: left;";
-	if(!is_file("$currDir/config.php")){
-		header('Content-Type: text/html; charset=iso-8859-1');
-		?>
-		<META HTTP-EQUIV="Refresh" CONTENT="2;url=setup.php">
-		<center>
-		<div style="<?php echo $setupStyle ?>">
-			<?php echo $Translation['db setup needed']; ?>
-			</div>
-			</center>
-		<?php
-		exit;
-	}
-	if(!is_file("$currDir/admin/incConfig.php")){
-		header('Content-Type: text/html; charset=iso-8859-1');
-		?>
-		<META HTTP-EQUIV="Refresh" CONTENT="2;url=admin/">
-		<center>
-		<div style="<?php echo $setupStyle ?>">
-			<?php echo $Translation['admin setup needed']; ?>
-			</div>
-			</center>
-		<?php
-		exit;
-	}
-	// -----------------------------------------
 
 	include("$currDir/admin/incFunctions.php");
-	include("$currDir/admin/incConfig.php");
+
+	/* trim $_POST, $_GET, $_REQUEST */
+	if(count($_POST)) $_POST = array_trim($_POST);
+	if(count($_GET)) $_GET = array_trim($_GET);
+	if(count($_REQUEST)) $_REQUEST = array_trim($_REQUEST);
+
 	// include global hook functions
 	@include("$currDir/hooks/__global.php");
 
@@ -44,24 +25,25 @@
 	if(!$noPathCheck && !is_dir($save_path)){
 		?>
 		<center>
-		<div style="<?php echo $setupStyle ?>">
-			Your site is not configured to support sessions correctly. Please edit your php.ini file and change the value of <i>session.save_path</i> to a valid path.
+			<div class="alert alert-danger">
+				Your site is not configured to support sessions correctly. Please edit your php.ini file and change the value of <i>session.save_path</i> to a valid path.
 			</div>
-			</center>
+		</center>
 		<?php
 		exit;
 	}
 	if(session_id()){ session_write_close(); }
-	@ini_set('session.save_handler', 'files');
+	$configured_save_handler = @ini_get('session.save_handler');
+	if($configured_save_handler != 'memcache' && $configured_save_handler != 'memcached')
+		@ini_set('session.save_handler', 'files');
 	@ini_set('session.serialize_handler', 'php');
 	@ini_set('session.use_cookies', '1');
 	@ini_set('session.use_only_cookies', '1');
-	@ini_set('session.cache_limiter', 'nocache');
+	@header('Cache-Control: no-cache, no-store, must-revalidate'); // HTTP 1.1.
+	@header('Pragma: no-cache'); // HTTP 1.0.
+	@header('Expires: 0'); // Proxies.
 	@session_name('resources_utilization');
 	session_start();
-	header('Cache-Control: no-cache, must-revalidate');
-	header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-	header('Content-Type: text/html; charset=iso-8859-1');
 
 	// check if membership system exists
 	setupMembership();
@@ -73,7 +55,6 @@
 	logInMember();
 
 	// convert expanded sorting variables, if provided, to SortField and SortDirection
-	define('maxSortBy', 4);
 	$postedOrderBy = array();
 	for($i = 0; $i < maxSortBy; $i++){
 		if(isset($_POST["OrderByField$i"])){
@@ -93,6 +74,9 @@
 		}
 		$_POST['SortField'] = substr($_POST['SortField'], 0, -2 - strlen($sd));
 		$_POST['SortDirection'] = $sd;
+	}elseif($_POST['apply_sorting']){
+		/* no sorting and came from filters page .. so clear sorting */
+		$_POST['SortField'] = $_POST['SortDirection'] = '';
 	}
 
 	#########################################################
@@ -104,6 +88,8 @@
 		logOutMember() -- destroys session and logs member out.
 		logInMember() -- checks POST login. If not valid, redirects to index.php, else returns TRUE
 		getTablePermissions($tn) -- returns an array of permissions allowed for logged member to given table (allowAccess, allowInsert, allowView, allowEdit, allowDelete) -- allowAccess is set to true if any access level is allowed
+		get_sql_fields($tn) -- returns the SELECT part of the table view query
+		get_sql_from($tn[, true]) -- returns the FROM part of the table view query, with full joins, optionally skipping permissions if true passed as 2nd param.
 		htmlUserBar() -- returns html code for displaying user login status to be used on top of pages.
 		showNotifications($msg, $class) -- returns html code for displaying a notification. If no parameters provided, processes the GET request for possible notifications.
 		parseMySQLDate(a, b) -- returns a if valid mysql date, or b if valid mysql date, or today if b is true, or empty if b is false.
@@ -111,22 +97,38 @@
 		addFilter(i, filterAnd, filterField, filterOperator, filterValue) -- enforce a filter over data
 		clearFilters() -- clear all filters
 		getMemberInfo() -- returns an array containing the currently signed-in member's info
+		loadView($view, $data) -- passes $data to templates/{$view}.php and returns the output
+		loadTable($table, $data) -- loads table template, passing $data to it
 		filterDropdownBy($filterable, $filterers, $parentFilterers, $parentPKField, $parentCaption, $parentTable, &$filterableCombo) -- applies cascading drop-downs for a lookup field, returns js code to be inserted into the page
 		br2nl($text) -- replaces all variations of HTML <br> tags with a new line character
+		htmlspecialchars_decode($text) -- inverse of htmlspecialchars()
+		entitiesToUTF8($text) -- convert unicode entities (e.g. &#1234;) to actual UTF8 characters, requires multibyte string PHP extension
+		func_get_args_byref() -- returns an array of arguments passed to a function, by reference
+		html_attr($str) -- prepare $str to be placed inside an HTML attribute
+		permissions_sql($table, $level) -- returns an array containing the FROM and WHERE additions for applying permissions to an SQL query
+		error_message($msg[, $back_url]) -- returns html code for a styled error message .. pass explicit false in second param to suppress back button
+		toMySQLDate($formattedDate, $sep = datalist_date_separator, $ord = datalist_date_format)
+		highlight($needle, $haystack) -- returns html of haystack where needle is wrapped in highlight span
+		reIndex(&$arr) -- returns a copy of the given array, with keys replaced by 1-based numeric indices, and values replaced by original keys
+		get_embed($provider, $url[, $width, $height, $retrieve]) -- returns embed code for a given url (supported providers: youtube, googlemap)
+		check_record_permission($table, $id, $perm = 'view') -- returns true if current user has the specified permission $perm ('view', 'edit' or 'delete') for the given recors, false otherwise
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	*/
 	#########################################################
-	function getTableList(){
-		$arrTables=array(
-			'resources'=>array('Resources', '', 'resources/table_icons/account_balances.png'),
-			'projects'=>array('Projects', '', 'resources/table_icons/application_from_storage.png'),
-			'assignments'=>array('Assignments', '', 'resources/table_icons/client_account_template.png')
-			);
+	function getTableList($skip_authentication = false){
+		$arrAccessTables = array();
+		$arrTables = array(   
+			'resources' => array('Resources', '', 'resources/table_icons/account_balances.png'),
+			'projects' => array('Projects', '', 'resources/table_icons/application_from_storage.png'),
+			'assignments' => array('Assignments', '', 'resources/table_icons/client_account_template.png')
+		);
+		if($skip_authentication || getLoggedAdmin()) return $arrTables;
+
 		if(is_array($arrTables)){
-			foreach($arrTables as $tn=>$tc){
-				$arrPerm=getTablePermissions($tn);
+			foreach($arrTables as $tn => $tc){
+				$arrPerm = getTablePermissions($tn);
 				if($arrPerm[0]){
-					$arrAccessTables[$tn]=$tc;
+					$arrAccessTables[$tn] = $tc;
 				}
 			}
 		}
@@ -135,29 +137,99 @@
 	}
 	#########################################################
 	function getTablePermissions($tn){
-		$groupID=getLoggedGroupID();
-		$memberID=makeSafe(getLoggedMemberID());
-		if(sqlValue("select count(1) from membership_userpermissions where lcase(memberID)='$memberID' and tableName='$tn'")){
-			$res=sql("select allowInsert, allowView, allowEdit, allowDelete from membership_userpermissions where lcase(memberID)='$memberID' and tableName='$tn'", $eo);
-		}else{
-			$res=sql("select allowInsert, allowView, allowEdit, allowDelete from membership_grouppermissions where groupID='$groupID' and tableName='$tn'", $eo);
+		static $table_permissions = array();
+		if(isset($table_permissions[$tn])) return $table_permissions[$tn];
+
+		$groupID = getLoggedGroupID();
+		$memberID = makeSafe(getLoggedMemberID());
+		$res_group = sql("select tableName, allowInsert, allowView, allowEdit, allowDelete from membership_grouppermissions where groupID='{$groupID}'", $eo);
+		$res_user = sql("select tableName, allowInsert, allowView, allowEdit, allowDelete from membership_userpermissions where lcase(memberID)='{$memberID}'", $eo);
+
+		while($row = db_fetch_assoc($res_group)){
+			$table_permissions[$row['tableName']] = array(
+				1 => intval($row['allowInsert']),
+				2 => intval($row['allowView']),
+				3 => intval($row['allowEdit']),
+				4 => intval($row['allowDelete']),
+				'insert' => intval($row['allowInsert']),
+				'view' => intval($row['allowView']),
+				'edit' => intval($row['allowEdit']),
+				'delete' => intval($row['allowDelete'])
+			);
 		}
 
-		if($row=mysql_fetch_row($res)){
-			if($row[0] || $row[1] || $row[2] || $row[3]){
-				$arrRet[0]=TRUE; /* allowAccess */
-			}else{
-				$arrRet[0]=FALSE;
+		// user-specific permissions, if specified, overwrite his group permissions
+		while($row = db_fetch_assoc($res_user)){
+			$table_permissions[$row['tableName']] = array(
+				1 => intval($row['allowInsert']),
+				2 => intval($row['allowView']),
+				3 => intval($row['allowEdit']),
+				4 => intval($row['allowDelete']),
+				'insert' => intval($row['allowInsert']),
+				'view' => intval($row['allowView']),
+				'edit' => intval($row['allowEdit']),
+				'delete' => intval($row['allowDelete'])
+			);
+		}
+
+		// if user has any type of access, set 'access' flag
+		foreach($table_permissions as $t => $p){
+			$table_permissions[$t]['access'] = $table_permissions[$t][0] = false;
+
+			if($p['insert'] || $p['view'] || $p['edit'] || $p['delete']){
+				$table_permissions[$t]['access'] = $table_permissions[$t][0] = true;
 			}
-			$arrRet[1]=$row[0]; /* allowInsert */
-			$arrRet[2]=$row[1]; /* allowView */
-			$arrRet[3]=$row[2]; /* allowEdit */
-			$arrRet[4]=$row[3]; /* allowDelete */
-
-			return $arrRet;
 		}
 
-		return array(FALSE, 0, 0, 0, 0);
+		return $table_permissions[$tn];
+	}
+
+	#########################################################
+	function get_sql_fields($table_name){
+		$sql_fields = array(   
+			'resources' => "`resources`.`Id` as 'Id', `resources`.`Name` as 'Name', `resources`.`Available` as 'Available'",
+			'projects' => "`projects`.`Id` as 'Id', `projects`.`Name` as 'Name', if(`projects`.`StartDate`,date_format(`projects`.`StartDate`,'%d/%m/%Y'),'') as 'StartDate', if(`projects`.`EndDate`,date_format(`projects`.`EndDate`,'%d/%m/%Y'),'') as 'EndDate'",
+			'assignments' => "`assignments`.`Id` as 'Id', IF(    CHAR_LENGTH(`projects1`.`Name`), CONCAT_WS('',   `projects1`.`Name`), '') as 'ProjectId', IF(    CHAR_LENGTH(`projects1`.`StartDate`) || CHAR_LENGTH(`projects1`.`EndDate`), CONCAT_WS('',   `projects1`.`StartDate`, ' <b>to</b> ', `projects1`.`EndDate`), '') as 'ProjectDuration', IF(    CHAR_LENGTH(`resources1`.`Name`), CONCAT_WS('',   `resources1`.`Name`), '') as 'ResourceId', `assignments`.`Commitment` as 'Commitment', if(`assignments`.`StartDate`,date_format(`assignments`.`StartDate`,'%d/%m/%Y'),'') as 'StartDate', if(`assignments`.`EndDate`,date_format(`assignments`.`EndDate`,'%d/%m/%Y'),'') as 'EndDate'"
+		);
+
+		if(isset($sql_fields[$table_name])){
+			return $sql_fields[$table_name];
+		}
+
+		return false;
+	}
+	#########################################################
+	function get_sql_from($table_name, $skip_permissions = false){
+		$sql_from = array(   
+			'resources' => "`resources` ",
+			'projects' => "`projects` ",
+			'assignments' => "`assignments` LEFT JOIN `projects` as projects1 ON `projects1`.`Id`=`assignments`.`ProjectId` LEFT JOIN `resources` as resources1 ON `resources1`.`Id`=`assignments`.`ResourceId` "
+		);
+
+		$pkey = array(   
+			'resources' => 'Id',
+			'projects' => 'Id',
+			'assignments' => 'Id'
+		);
+
+		if(isset($sql_from[$table_name])){
+			if($skip_permissions) return $sql_from[$table_name];
+
+			// mm: build the query based on current member's permissions
+			$perm = getTablePermissions($table_name);
+			if($perm[2] == 1){ // view owner only
+				$sql_from[$table_name] .= ", membership_userrecords WHERE `{$table_name}`.`{$pkey[$table_name]}`=membership_userrecords.pkValue and membership_userrecords.tableName='{$table_name}' and lcase(membership_userrecords.memberID)='" . getLoggedMemberID() . "'";
+			}elseif($perm[2] == 2){ // view group only
+				$sql_from[$table_name] .= ", membership_userrecords WHERE `{$table_name}`.`{$pkey[$table_name]}`=membership_userrecords.pkValue and membership_userrecords.tableName='{$table_name}' and membership_userrecords.groupID='" . getLoggedGroupID() . "'";
+			}elseif($perm[2] == 3){ // view all
+				$sql_from[$table_name] .= ' WHERE 1=1';
+			}else{ // view none
+				return false;
+			}
+			return $sql_from[$table_name];
+		}
+
+		return false;
 	}
 	#########################################################
 	function getLoggedGroupID(){
@@ -179,7 +251,7 @@
 	}
 	#########################################################
 	function setAnonymousAccess(){
-		global $adminConfig;
+		$adminConfig = config('adminConfig');
 
 		$anonGroupID=sqlValue("select groupID from membership_groups where name='".$adminConfig['anonymousGroup']."'");
 		$_SESSION['memberGroupID']=($anonGroupID ? $anonGroupID : 0);
@@ -189,11 +261,11 @@
 	}
 	#########################################################
 	function logInMember(){
-		$redir='index.php';
-		if($_POST['signIn']!=''){
-			if($_POST['username']!='' && $_POST['password']!=''){
-				$username=makeSafe(strtolower(trim($_POST['username'])));
-				$password=md5(trim($_POST['password']));
+		$redir = 'index.php';
+		if($_POST['signIn'] != ''){
+			if($_POST['username'] != '' && $_POST['password'] != ''){
+				$username = makeSafe(strtolower($_POST['username']));
+				$password = md5($_POST['password']);
 
 				if(sqlValue("select count(1) from membership_users where lcase(memberID)='$username' and passMD5='$password' and isApproved=1 and isBanned=0")==1){
 					$_SESSION['memberID']=$username;
@@ -227,6 +299,7 @@
 					), $args);
 			}
 
+			if(!headers_sent()) header('HTTP/1.0 403 Forbidden');
 			redirect("index.php?loginFailed=1");
 			exit;
 		}elseif((!$_SESSION['memberID'] || $_SESSION['memberID']==$adminConfig['anonymousMember']) && $_COOKIE['resources_utilization_rememberMe']!=''){
@@ -246,66 +319,112 @@
 	function htmlUserBar(){
 		global $adminConfig, $Translation;
 
-		if($_POST['Print_x']!='' || $_GET['Print_x']!='' || $_POST['dvprint_x']!='' || $_GET['dvprint_x']!=''){
-			return '';
-		}
-
 		ob_start();
-		$homePage = (basename($_SERVER['PHP_SELF'])=='index.php' ? true : false);
+		$home_page = (basename($_SERVER['PHP_SELF'])=='index.php' ? true : false);
 
 		?>
-		<div class="TableFooter" style="height: 20px; margin: 0 0 25px 0; padding: 3px 10px; border-radius: 4px;">
-			<?php if(!$homePage){ ?>
-				<div style="float: left; margin: 0 20px 0 0;"><a href="./index.php"><img src="home.png" border="0" title="<?php echo $Translation['homepage']; ?>" /></a></div>
-				<div style="float: left;">
-					<?php echo NavMenus(); ?>
-				</div>
-			<?php } ?>
-			<div style="float: right;"><?php
-				if(!$_GET['signIn'] && !$_GET['loginFailed']){
-					if(getLoggedMemberID()==$adminConfig['anonymousMember']){
-						?><?php echo $Translation['not signed in']; ?>. <a href="index.php?signOut=1"><?php echo $Translation['sign in']; ?></a><?php
-					}else{
-						?><?php echo $Translation['signed as']; ?> '<a href="membership_profile.php"><?php echo getLoggedMemberID(); ?></a>'. <a href="index.php?signOut=1"><?php echo $Translation['sign out']; ?></a><?php
-					}
-				}
-			?></div>
-		</div>
+		<nav class="navbar navbar-default navbar-fixed-top hidden-print" role="navigation">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<!-- application title is obtained from the name besides the yellow database icon in AppGini, use underscores for spaces -->
+				<a class="navbar-brand" href="index.php"><i class="glyphicon glyphicon-home"></i> resources utilization</a>
+			</div>
+			<div class="collapse navbar-collapse">
+				<ul class="nav navbar-nav">
+					<?php if(!$home_page){ ?>
+						<li class="dropdown">
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown"><?php echo $Translation['select a table']; ?> <b class="caret"></b></a>
+							<ul class="dropdown-menu" role="menu">
+								<?php echo NavMenus(); ?>
+							</ul>
+						</li>
+					<?php } ?>
+				</ul>
+
+				<?php if(getLoggedAdmin()){ ?>
+					<ul class="nav navbar-nav">
+						<a href="admin/pageHome.php" class="btn btn-danger navbar-btn visible-sm visible-md visible-lg"><i class="glyphicon glyphicon-cog"></i> <?php echo $Translation['admin area']; ?></a>
+						<a href="admin/pageHome.php" class="visible-xs btn btn-danger navbar-btn btn-lg"><i class="glyphicon glyphicon-cog"></i> <?php echo $Translation['admin area']; ?></a>
+					</ul>
+				<?php } ?>
+
+				<?php if(!$_GET['signIn'] && !$_GET['loginFailed']){ ?>
+					<?php if(getLoggedMemberID() == $adminConfig['anonymousMember']){ ?>
+						<a href="index.php?signIn=1" class="btn btn-success navbar-btn navbar-right"><?php echo $Translation['sign in']; ?></a>
+						<p class="navbar-text navbar-right">
+							<?php echo $Translation['not signed in']; ?>
+						</p>
+					<?php }else{ ?>
+						<a class="btn navbar-btn btn-default navbar-right" href="index.php?signOut=1"><i class="glyphicon glyphicon-log-out"></i> <?php echo $Translation['sign out']; ?></a>
+						<p class="navbar-text navbar-right">
+							<?php echo $Translation['signed as']; ?> <strong><a href="membership_profile.php" class="navbar-link"><?php echo getLoggedMemberID(); ?></a></strong>
+						</p>
+					<?php } ?>
+				<?php } ?>
+			</div>
+		</nav>
 		<?php
 
-		$html=ob_get_contents();
+		$html = ob_get_contents();
 		ob_end_clean();
 
 		return $html;
 	}
 	#########################################################
-	function showNotifications($msg='', $class=''){
+	function showNotifications($msg = '', $class = '', $fadeout = true){
 		global $Translation;
 
-		$notifyTemplate='<div id="%%ID%%" class="%%CLASS%%" style="display: none;">%%MSG%%</div>'.
-					'<script>new Effect.Appear("%%ID%%", {duration:2, from:0.0, to:1.0}); '.
-					'new PeriodicalExecuter(function(pe){ '.
-					'new Effect.Fade("%%ID%%", {duration:2}); '.
-					'pe.stop();'.
-					'}, 5); </script>'."\n";
+		$notify_template_no_fadeout = '<div id="%%ID%%" class="alert alert-dismissable %%CLASS%%" style="display: none; padding-top: 6px; padding-bottom: 6px;">' .
+					'<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>' .
+					'%%MSG%%</div>' .
+					'<script> jQuery(function(){ jQuery("#%%ID%%").show("slow"); }); </script>'."\n";
+		$notify_template = '<div id="%%ID%%" class="alert %%CLASS%%" style="display: none; padding-top: 6px; padding-bottom: 6px;">%%MSG%%</div>' .
+					'<script>' .
+						'jQuery(function(){' .
+							'jQuery("#%%ID%%").show("slow", function(){' .
+								'setTimeout(function(){ jQuery("#%%ID%%").hide("slow"); }, 4000);' .
+							'});' .
+						'});' .
+					'</script>'."\n";
 
 		if(!$msg){ // if no msg, use url to detect message to display
-			if($_GET['record-added-ok']!=''){
-				$msg=$Translation['new record saved'];
-				$class='SuccessNotify';
-			}elseif($_GET['record-updated-ok']!=''){
-				$msg=$Translation['record updated'];
-				$class='SuccessNotify';
+			if($_REQUEST['record-added-ok'] != ''){
+				$msg = $Translation['new record saved'];
+				$class = 'alert-success';
+			}elseif($_REQUEST['record-added-error'] != ''){
+				$msg = $Translation['Couldn\'t save the new record'];
+				$class = 'alert-danger';
+				$fadeout = false;
+			}elseif($_REQUEST['record-updated-ok'] != ''){
+				$msg = $Translation['record updated'];
+				$class = 'alert-success';
+			}elseif($_REQUEST['record-updated-error'] != ''){
+				$msg = $Translation['Couldn\'t save changes to the record'];
+				$class = 'alert-danger';
+				$fadeout = false;
+			}elseif($_REQUEST['record-deleted-ok'] != ''){
+				$msg = $Translation['The record has been deleted successfully'];
+				$class = 'alert-success';
+				$fadeout = false;
+			}elseif($_REQUEST['record-deleted-error'] != ''){
+				$msg = $Translation['Couldn\'t delete this record'];
+				$class = 'alert-danger';
+				$fadeout = false;
 			}else{
 				return '';
 			}
 		}
-		$id='notification-'.rand();
+		$id = 'notification-' . rand();
 
-		$out=$notifyTemplate;
-		$out=str_replace('%%ID%%', $id, $out);
-		$out=str_replace('%%MSG%%', $msg, $out);
-		$out=str_replace('%%CLASS%%', $class, $out);
+		$out = ($fadeout ? $notify_template : $notify_template_no_fadeout);
+		$out = str_replace('%%ID%%', $id, $out);
+		$out = str_replace('%%MSG%%', $msg, $out);
+		$out = str_replace('%%CLASS%%', $class, $out);
 
 		return $out;
 	}
@@ -361,16 +480,22 @@
 	#########################################################
 	function addFilter($index, $filterAnd, $filterField, $filterOperator, $filterValue){
 		// validate input
-		if($index<1 || $index>80 || !is_int($index))   return false;
-		if($filterAnd!='or')   $filterAnd='and';
-		$filterField=intval($filterField);
-		$filterOperator=strtolower($filterOperator);
-		if(!in_array($filterOperator, array('<=>', '!=', '>', '>=', '<', '<=', 'like', 'not like', 'isEmpty', 'isNotEmpty')))
-			$filterOperator='like';
+		if($index < 1 || $index > 80 || !is_int($index)) return false;
+		if($filterAnd != 'or')   $filterAnd = 'and';
+		$filterField = intval($filterField);
+
+		/* backward compatibility */
+		if(in_array($filterOperator, $GLOBALS['filter_operators'])){
+			$filterOperator = array_search($filterOperator, $GLOBALS['filter_operators']);
+		}
+
+		if(!in_array($filterOperator, array_keys($GLOBALS['filter_operators']))){
+			$filterOperator = 'like';
+		}
 
 		if(!$filterField){
-			$filterOperator='';
-			$filterValue='';
+			$filterOperator = '';
+			$filterValue = '';
 		}
 
 		if($_SERVER['REQUEST_METHOD']=='POST'){
@@ -394,31 +519,43 @@
 		}
 	}
 	#########################################################
-	function getMemberInfo($memberID=''){
-		global $adminConfig;
-		$mi=array();
+	function getMemberInfo($memberID = ''){
+		static $member_info = array();
 
 		if(!$memberID){
-			$memberID=getLoggedMemberID();
+			$memberID = getLoggedMemberID();
 		}
 
+		// return cached results, if present
+		if(isset($member_info[$memberID])) return $member_info[$memberID];
+
+		$adminConfig = config('adminConfig');
+		$mi = array();
+
 		if($memberID){
-			$res=sql("select * from membership_users where memberID='".addslashes($memberID)."'", $eo);
-			if($row=mysql_fetch_assoc($res)){
-				$mi['username']=$memberID;
-				$mi['groupID']=$row['groupID'];
-				$mi['group']=sqlValue("select name from membership_groups where groupID='".$row['groupID']."'");
-				$mi['admin']=($adminConfig['adminUsername']==$memberID ? TRUE : FALSE);
-				$mi['email']=$row['email'];
-				$mi['custom'][0]=$row['custom1'];
-				$mi['custom'][1]=$row['custom2'];
-				$mi['custom'][2]=$row['custom3'];
-				$mi['custom'][3]=$row['custom4'];
-				$mi['banned']=($row['isBanned'] ? TRUE : FALSE);
-				$mi['approved']=($row['isApproved'] ? TRUE : FALSE);
-				$mi['signupDate']=@date('j/n/Y', @strtotime($row['signupDate']));
-				$mi['comments']=$row['comments'];
-				$mi['IP']=$_SERVER['REMOTE_ADDR'];
+			$res = sql("select * from membership_users where memberID='" . makeSafe($memberID) . "'", $eo);
+			if($row = db_fetch_assoc($res)){
+				$mi = array(
+					'username' => $memberID,
+					'groupID' => $row['groupID'],
+					'group' => sqlValue("select name from membership_groups where groupID='{$row['groupID']}'"),
+					'admin' => ($adminConfig['adminUsername'] == $memberID ? true : false),
+					'email' => $row['email'],
+					'custom' => array(
+						$row['custom1'], 
+						$row['custom2'], 
+						$row['custom3'], 
+						$row['custom4']
+					),
+					'banned' => ($row['isBanned'] ? true : false),
+					'approved' => ($row['isApproved'] ? true : false),
+					'signupDate' => @date('n/j/Y', @strtotime($row['signupDate'])),
+					'comments' => $row['comments'],
+					'IP' => $_SERVER['REMOTE_ADDR']
+				);
+
+				// cache results
+				$member_info[$memberID] = $mi;
 			}
 		}
 
@@ -439,7 +576,6 @@
 			return $ret;
 		} 
 	} 
-
 	#########################################################
 	/**
 	* Loads a given view from the templates folder, passing the given data to it
@@ -466,7 +602,37 @@
 
 		return $out;
 	}
+	#########################################################
+	/**
+	* Loads a table template from the templates folder, passing the given data to it
+	* @param $table_name the name of the table whose template is to be loaded from the 'templates' folder
+	* @param $the_data_to_pass_to_the_table associative array containing the data to pass to the table template
+	* @return the output of the parsed table template as a string
+	*/
+	function loadTable($table_name, $the_data_to_pass_to_the_table = array()){
+		$dont_load_header = $the_data_to_pass_to_the_table['dont_load_header'];
+		$dont_load_footer = $the_data_to_pass_to_the_table['dont_load_footer'];
 
+		$header = $table = $footer = '';
+
+		if(!$dont_load_header){
+			// try to load tablename-header
+			if(!($header = loadView("{$table_name}-header", $the_data_to_pass_to_the_table))){
+				$header = loadView('table-common-header', $the_data_to_pass_to_the_table);
+			}
+		}
+
+		$table = loadView($table_name, $the_data_to_pass_to_the_table);
+
+		if(!$dont_load_footer){
+			// try to load tablename-footer
+			if(!($footer = loadView("{$table_name}-footer", $the_data_to_pass_to_the_table))){
+				$footer = loadView('table-common-footer', $the_data_to_pass_to_the_table);
+			}
+		}
+
+		return "{$header}{$table}{$footer}";
+	}
 	#########################################################
 	function filterDropdownBy($filterable, $filterers, $parentFilterers, $parentPKField, $parentCaption, $parentTable, &$filterableCombo){
 		$filterersArray = explode(',', $filterers);
@@ -474,7 +640,7 @@
 		$parentFiltererList = '`' . implode('`, `', $parentFilterersArray) . '`';
 		$res=sql("SELECT `$parentPKField`, $parentCaption, $parentFiltererList FROM `$parentTable` ORDER BY 2", $eo);
 		$filterableData = array();
-		while($row=mysql_fetch_row($res)){
+		while($row=db_fetch_row($res)){
 			$filterableData[$row[0]] = $row[1];
 			$filtererIndex = 0;
 			foreach($filterersArray as $filterer){
@@ -524,6 +690,17 @@
 			$filterJS.="\n\t\t\t\t({$filterable}_item == selected_{$filterable} ? true : false)";
 			$filterJS.="\n\t\t\t);";
 			$filterJS.="\n\t\t}";
+			$filterJS.="\n\t\tif(selected_{$filterable} && selected_{$filterable} == \$F('{$filterable}')){";
+			$filterJS.="\n\t\t\tfor({$filterer}_item in {$filterable}_data_by_{$filterer}){";
+			$filterJS.="\n\t\t\t\tfor({$filterable}_item in {$filterable}_data_by_{$filterer}[{$filterer}_item]){";
+			$filterJS.="\n\t\t\t\t\tif({$filterable}_item == selected_{$filterable}){";
+			$filterJS.="\n\t\t\t\t\t\t$('{$filterer}').value = {$filterer}_item;";
+			$filterJS.="\n\t\t\t\t\t\tbreak;";
+			$filterJS.="\n\t\t\t\t\t}";
+			$filterJS.="\n\t\t\t\t}";
+			$filterJS.="\n\t\t\t\tif({$filterable}_item == selected_{$filterable}) break;";
+			$filterJS.="\n\t\t\t}";
+			$filterJS.="\n\t\t}";
 			$filterJS.="\n\t}";
 			$filterJS.="\n\t$('{$filterable}').highlight();";
 			$filterJS.="\n};";
@@ -543,5 +720,253 @@
 	#########################################################
 	function br2nl($text){
 		return  preg_replace('/\<br(\s*)?\/?\>/i', "\n", $text);
+	}
+
+	#########################################################
+	if(!function_exists('htmlspecialchars_decode')){
+		function htmlspecialchars_decode($string, $quote_style = ENT_COMPAT){
+			return strtr($string, array_flip(get_html_translation_table(HTML_SPECIALCHARS, $quote_style)));
+		}
+	}
+
+	#########################################################
+	function entitiesToUTF8($input){
+		return preg_replace_callback('/(&#[0-9]+;)/', '_toUTF8', $input);
+	}
+
+	function _toUTF8($m){
+		if(function_exists('mb_convert_encoding')){
+			return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+		}else{
+			return $m[1];
+		}
+	}
+
+	#########################################################
+	function func_get_args_byref() {
+		if(!function_exists('debug_backtrace')) return false;
+
+		$trace = debug_backtrace();
+		return $trace[1]['args'];
+	}
+
+	#########################################################
+	function html_attr($str) {
+		return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
+	}
+	#########################################################
+
+	function permissions_sql($table, $level = 'all'){
+		if(!in_array($level, array('user', 'group'))){ $level = 'all'; }
+		$perm = getTablePermissions($table);
+		$from = '';
+		$where = '';
+		$pk = getPKFieldName($table);
+
+		if($perm[2] == 1 || ($perm[2] > 1 && $level == 'user')){ // view owner only
+			$from = 'membership_userrecords';
+			$where = "(`$table`.`$pk`=membership_userrecords.pkValue and membership_userrecords.tableName='$table' and lcase(membership_userrecords.memberID)='".getLoggedMemberID()."')";
+		}elseif($perm[2] == 2 || ($perm[2] > 2 && $level == 'group')){ // view group only
+			$from = 'membership_userrecords';
+			$where = "(`$table`.`$pk`=membership_userrecords.pkValue and membership_userrecords.tableName='$table' and membership_userrecords.groupID='".getLoggedGroupID()."')";
+		}elseif($perm[2] == 3){ // view all
+			// no further action
+		}elseif($perm[2] == 0){ // view none
+			return false;
+		}
+
+		return array('where' => $where, 'from' => $from, 0 => $where, 1 => $from);
+	}
+
+	#########################################################
+	function error_message($msg, $back_url = ''){
+		$curr_dir = dirname(__FILE__);
+		global $Translation;
+
+		ob_start();
+
+		include_once($curr_dir . '/header.php');
+		echo '<div class="panel panel-danger">';
+			echo '<div class="panel-heading"><h3 class="panel-title">' . $Translation['error:'] . '</h3></div>';
+			echo '<div class="panel-body"><p class="text-danger">' . $msg . '</p>';
+			if($back_url !== false){ // explicitly passing false suppresses the back link completely
+				echo '<div class="text-center">';
+				if($back_url){
+					echo '<a href="' . $back_url . '" class="btn btn-danger btn-lg vspacer-lg"><i class="glyphicon glyphicon-chevron-left"></i> ' . $Translation['< back'] . '</a>';
+				}else{
+					echo '<a href="#" class="btn btn-danger btn-lg vspacer-lg" onclick="history.go(-1); return false;"><i class="glyphicon glyphicon-chevron-left"></i> ' . $Translation['< back'] . '</a>';
+				}
+				echo '</div>';
+			}
+			echo '</div>';
+		echo '</div>';
+		include_once($curr_dir . '/footer.php');
+
+		$out = ob_get_contents();
+		ob_end_clean();
+
+		return $out;
+	}
+	#########################################################
+
+	function toMySQLDate($formattedDate, $sep = datalist_date_separator, $ord = datalist_date_format){
+		// extract date elements
+		$de=explode($sep, $formattedDate);
+		$mySQLDate=intval($de[strpos($ord, 'Y')]).'-'.intval($de[strpos($ord, 'm')]).'-'.intval($de[strpos($ord, 'd')]);
+		return $mySQLDate;
+	}
+	#########################################################
+
+	function highlight($needle, $haystack){
+		$needle = preg_quote($needle, "/");
+		return preg_replace("/(?!<.*?)({$needle})(?![^<>]*?>)/i", '<span class="search_highlight">\1</span>', $haystack);
+	}
+	#########################################################
+
+	function reIndex(&$arr){
+		$i=1;
+		foreach($arr as $n=>$v){
+			$arr2[$i]=$n;
+			$i++;
+		}
+		return $arr2;
+	}
+
+	#########################################################
+
+	function get_embed($provider, $url, $max_width = '', $max_height = '', $retrieve = 'html'){
+		global $Translation;
+		if(!$url) return '';
+
+		$providers = array(
+			'youtube' => array('oembed' => 'http://www.youtube.com/oembed?'),
+			'googlemap' => array('oembed' => '', 'regex' => '/^http.*\.google\..*maps/i')
+		);
+
+		if(!isset($providers[$provider])){
+			return '<div class="text-danger">' . $Translation['invalid provider'] . '</div>';
+		}
+
+		if(isset($providers[$provider]['regex']) && !preg_match($providers[$provider]['regex'], $url)){
+			return '<div class="text-danger">' . $Translation['invalid url'] . '</div>';
+		}
+
+		if($providers[$provider]['oembed']){
+			$oembed = $providers[$provider]['oembed'] . 'url=' . urlencode($url) . "&maxwidth={$max_width}&maxheight={$max_height}&format=json";
+			$data_json = request_cache($oembed);
+
+			$data = json_decode($data_json, true);
+			if($data === null){
+				/* an error was returned rather than a json string */
+				if($retrieve == 'html') return "<div class=\"text-danger\">{$data_json}\n<!-- {$oembed} --></div>";
+				return '';
+			}
+
+			return (isset($data[$retrieve]) ? $data[$retrieve] : $data['html']);
+		}
+
+		/* special cases (where there is no oEmbed provider) */
+		if($provider == 'googlemap') return get_embed_googlemap($url, $max_width, $max_height, $retrieve);
+
+		return '<div class="text-danger">Invalid provider!</div>';
+	}
+
+	#########################################################
+
+	function get_embed_googlemap($url, $max_width = '', $max_height = '', $retrieve = 'html'){
+		global $Translation;
+		$url_parts = parse_url($url);
+		$coords_regex = '/-?\d+(\.\d+)?[,+]-?\d+(\.\d+)?(,\d{1,2}z)?/'; /* http://stackoverflow.com/questions/2660201 */
+
+		if(preg_match($coords_regex, $url_parts['path'] . '?' . $url_parts['query'], $m)){
+			list($lat, $long, $zoom) = explode(',', $m[0]);
+			$zoom = intval($zoom);
+			if(!$zoom) $zoom = 10; /* default zoom */
+			if(!$max_height) $max_height = 360;
+			if(!$max_width) $max_width = 480;
+
+			$api_key = '';
+			$embed_url = "https://www.google.com/maps/embed/v1/view?key={$api_key}&center={$lat},{$long}&zoom={$zoom}&maptype=roadmap";
+			$thumbnail_url = "https://maps.googleapis.com/maps/api/staticmap?center={$lat},{$long}&zoom={$zoom}&maptype=roadmap&size={$max_width}x{$max_height}";
+
+			if($retrieve == 'html'){
+				return "<iframe width=\"{$max_width}\" height=\"{$max_height}\" frameborder=\"0\" style=\"border:0\" src=\"{$embed_url}\"></iframe>";
+			}else{
+				return $thumbnail_url;
+			}
+		}else{
+			return '<div class="text-danger">' . $Translation['cant retrieve coordinates from url'] . '</div>';
+		}
+	}
+
+	#########################################################
+
+	function request_cache($request, $force_fetch = false){
+		$max_cache_lifetime = 7 * 86400; /* max cache lifetime in seconds before refreshing from source */
+
+		/* membership_cache table exists? if not, create it */
+		static $cache_table_exists = false;
+		if(!$cache_table_exists && !$force_fetch){
+			$te = sqlValue("show tables like 'membership_cache'");
+			if(!$te){
+				if(!sql("CREATE TABLE `membership_cache` (`request` VARCHAR(100) NOT NULL, `request_ts` INT, `response` TEXT NOT NULL, PRIMARY KEY (`request`))", $eo)){
+					/* table can't be created, so force fetching request */
+					return request_cache($request, true);
+				}
+			}
+			$cache_table_exists = true;
+		}
+
+		/* retrieve response from cache if exists */
+		if(!$force_fetch){
+			$res = sql("select response, request_ts from membership_cache where request='" . md5($request) . "'", $eo);
+			if(!$row = db_fetch_array($res)) return request_cache($request, true);
+
+			$response = $row[0];
+			$response_ts = $row[1];
+			if($response_ts < time() - $max_cache_lifetime) return request_cache($request, true);
+		}
+
+		/* if no response in cache, issue a request */
+		if(!$response || $force_fetch){
+			$response = @file_get_contents($request);
+			if($response === false){
+				$error = error_get_last();
+				$error_message = preg_replace('/.*: (.*)/', '$1', $error['message']);
+				return $error_message;
+			}elseif($cache_table_exists){
+				/* store response in cache */
+				$ts = time();
+				sql("replace into membership_cache set request='" . md5($request) . "', request_ts='{$ts}', response='" . makeSafe($response, false) . "'", $eo);
+			}
+		}
+
+		return $response;
+	}
+
+	#########################################################
+
+	function check_record_permission($table, $id, $perm = 'view'){
+		if($perm != 'edit' && $perm != 'delete') $perm = 'view';
+
+		$perms = getTablePermissions($table);
+		if(!$perms[$perm]) return false;
+
+		$safe_id = makeSafe($id);
+		$safe_table = makeSafe($table);
+
+		if($perms[$perm] == 1){ // own records only
+			$username = getLoggedMemberID();
+			$owner = sqlValue("select memberID from membership_userrecords where tableName='{$safe_table}' and pkValue='{$safe_id}'");
+			if($owner == $username) return true;
+		}elseif($perms[$perm] == 2){ // group records
+			$group_id = getLoggedGroupID();
+			$owner_group_id = sqlValue("select groupID from membership_userrecords where tableName='{$safe_table}' and pkValue='{$safe_id}'");
+			if($owner_group_id == $group_id) return true;
+		}elseif($perms[$perm] == 3){ // all records
+			return true;
+		}
+
+		return false;
 	}
 

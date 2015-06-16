@@ -5,8 +5,8 @@
 <!doctype html public "-//W3C//DTD html 4.0 //en">
 <html>
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-		<link rel="stylesheet" type="text/css" href="adminStyles.css">
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<link rel="stylesheet" href="adminStyles.css">
 		<title>Membership Management -- Record details</title>
 		</head>
 	<body>
@@ -17,7 +17,7 @@
 	if($recID!=''){
 		// fetch record data to fill in the form below
 		$res=sql("select * from membership_userrecords where recID='$recID'", $eo);
-		if($row=mysql_fetch_assoc($res)){
+		if($row=db_fetch_assoc($res)){
 			// get record data
 			$tableName=$row['tableName'];
 			$pkValue=$row['pkValue'];
@@ -39,15 +39,15 @@
 	if(!$res=sql("show fields from `$tableName`", $eo)){
 		errorMsg("Couldn't retrieve field list from '$tableName'");
 	}
-	while($row=mysql_fetch_assoc($res)){
+	while($row=db_fetch_assoc($res)){
 		$field[]=$row['Field'];
 	}
 
-	$res=sql("select * from `$tableName` where `$pkField`='$pkValue'", $eo);
-	if($row=mysql_fetch_assoc($res)){
+	$res=sql("select * from `$tableName` where `$pkField`='" . makeSafe($pkValue, false) . "'", $eo);
+	if($row=db_fetch_assoc($res)){
 		?>
 		<h2>Table: <?php echo $tableName; ?></h2>
-		<table border="0" cellspacing="0" cellpadding="0" align="center">
+		<table class="table table-striped">
 			<tr>
 				<td class="tdHeader"><div class="ColCaption">Field name</div></td>
 				<td class="tdHeader"><div class="ColCaption">Value</div></td>

@@ -44,7 +44,7 @@
 		$destinationGroup=sqlValue("select name from membership_groups where groupID='$destinationGroupID'");
 
 		// begin transfer
-		echo "<br /><br /><br />";
+		echo "<br><br><br>";
 		if($moveMembers && $sourceMemberID!=-1){
 			echo "Moving member '$sourceMemberID' and his data from group '$sourceGroup' to group '$destinationGroup' ...";
 
@@ -111,7 +111,7 @@
 
 		// display status and a batch bookmark for later instant reuse of the wizard
 		?>
-		<div class="status"><b>STATUS:</b><br /><?php echo $status; ?></div>
+		<div class="alert alert-info"><b>STATUS:</b><br><?php echo $status; ?></div>
 		<div>
 			To repeat the same batch transfer again later you can
 			<a href="pageTransferOwnership.php?sourceGroupID=<?php echo $sourceGroupID; ?>&amp;sourceMemberID=<?php echo urlencode($sourceMemberID); ?>&amp;destinationGroupID=<?php echo $destinationGroupID; ?>&amp;destinationMemberID=<?php echo urlencode($destinationMemberID); ?>&amp;moveMembers=<?php echo $moveMembers; ?>">bookmark or copy this link</a>.
@@ -126,10 +126,10 @@
 	// STEP 1
 	?>
 
-	<h1>Batch Transfer Of Ownership</h1>
+	<div class="page-header"><h1>Batch Transfer Of Ownership</h1></div>
 
 	<form method="get" action="pageTransferOwnership.php">
-		<table cellpadding="0" cellspacing="0" border="0" width="700">
+		<table class="table table-striped">
 			<tr>
 				<td class="tdHeader" colspan="2">
 					<h3>STEP 1:</h3>
@@ -177,7 +177,7 @@
 						$arrVal[]='-1';
 						$arrCap[]="All members of '".htmlspecialchars(sqlValue("select name from membership_groups where groupID='$sourceGroupID'"))."'";
 						if($res=sql("select lcase(memberID), lcase(memberID) from membership_users where groupID='$sourceGroupID' order by memberID", $eo)){
-							while($row=mysql_fetch_row($res)){
+							while($row=db_fetch_row($res)){
 								$arrVal[]=$row[0];
 								$arrCap[]=$row[1];
 							}

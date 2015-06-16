@@ -1,9 +1,24 @@
 <?php
-	error_reporting(E_ALL ^ E_NOTICE);
+	error_reporting(E_ERROR | E_WARNING | E_PARSE);
+
+	if(!defined('datalist_db_encoding')) define('datalist_db_encoding', 'UTF-8');
 	if(function_exists('set_magic_quotes_runtime')) @set_magic_quotes_runtime(0);
 	ob_start();
 	$currDir=dirname(__FILE__);
+	include("$currDir/../db.php");
+	include("$currDir/../settings-manager.php");
+
+	// check if initial setup was performed or not
+	detect_config();
+	migrate_config();
+
+	$adminConfig = config('adminConfig');
 	include("$currDir/incFunctions.php");
+
+	/* trim $_POST, $_GET, $_REQUEST */
+	if(count($_POST)) $_POST = array_trim($_POST);
+	if(count($_GET)) $_GET = array_trim($_GET);
+	if(count($_REQUEST)) $_REQUEST = array_trim($_REQUEST);
 
 	// check sessions config
 	$noPathCheck=True;
@@ -11,11 +26,11 @@
 	$save_path=$arrPath[count($arrPath)-1];
 	if(!$noPathCheck && !is_dir($save_path)){
 		?>
-		<link rel="stylesheet" type="text/css" href="adminStyles.css">
+		<link rel="stylesheet" href="adminStyles.css">
 		<center>
-		<div class="status">
+		<div class="alert alert-danger">
 			Your site is not configured to support sessions correctly. Please edit your php.ini file and change the value of <i>session.save_path</i> to a valid path.
-			<br /><br />
+			<br><br>
 			Current session.save_path value is '<?php echo $save_path; ?>'.
 			</div>
 			</center>
@@ -23,61 +38,18 @@
 		exit;
 	}
 	if(session_id()){ session_write_close(); }
-	@ini_set('session.save_handler', 'files');
+	$configured_save_handler = @ini_get('session.save_handler');
+	if($configured_save_handler != 'memcache' && $configured_save_handler != 'memcached')
+		@ini_set('session.save_handler', 'files');
 	@ini_set('session.serialize_handler', 'php');
 	@ini_set('session.use_cookies', '1');
 	@ini_set('session.use_only_cookies', '1');
-	@ini_set('session.cache_limiter', 'nocache');
+	@header('Cache-Control: no-cache, no-store, must-revalidate'); // HTTP 1.1.
+	@header('Pragma: no-cache'); // HTTP 1.0.
+	@header('Expires: 0'); // Proxies.
 	@session_name('resources_utilization');
 	session_start();
-	header("Cache-Control: no-cache, must-revalidate");
-	header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
 
-
-	// check if initial setup was performed or not
-	if(!is_file("$currDir/../config.php")){
-		errorMsg("ERROR! You didn't configure your connection yet. Please <a href=\"../setup.php\">run the setup procedure</a> first.");
-		exit;
-	}
-
-
-	// check if the file 'incConfig.php' exists or not. If not, generate one.
-	$conFile="$currDir/incConfig.php";
-
-	if(!is_file($conFile)){
-		if(!$fp=@fopen($conFile, "w")){
-			errorMsg("Couldn't create the file '$conFile'. Please make sure the directory is writeable (Try chmoding it to 755 or 777).");
-			exit;
-		}else{
-			fwrite($fp, "<?php\n\t");
-
-			fwrite($fp, "\$adminConfig['adminUsername']='admin';\n\t");
-			fwrite($fp, "\$adminConfig['adminPassword']='21232f297a57a5a743894a0e4a801fc3';\n\t");
-			fwrite($fp, "\$adminConfig['notifyAdminNewMembers']=0;\n\t");
-			fwrite($fp, "\$adminConfig['defaultSignUp']=1;\n\t");
-			fwrite($fp, "\$adminConfig['anonymousGroup']='anonymous';\n\t");
-			fwrite($fp, "\$adminConfig['anonymousMember']='guest';\n\t");
-			fwrite($fp, "\$adminConfig['groupsPerPage']=10;\n\t");
-			fwrite($fp, "\$adminConfig['membersPerPage']=10;\n\t");
-			fwrite($fp, "\$adminConfig['recordsPerPage']=10;\n\t");
-			fwrite($fp, "\$adminConfig['custom1']='Full Name';\n\t");
-			fwrite($fp, "\$adminConfig['custom2']='Address';\n\t");
-			fwrite($fp, "\$adminConfig['custom3']='City';\n\t");
-			fwrite($fp, "\$adminConfig['custom4']='State';\n\t");
-			fwrite($fp, "\$adminConfig['MySQLDateFormat']='%c/%e/%Y';\n\t");
-			fwrite($fp, "\$adminConfig['PHPDateFormat']='n/j/Y';\n\t");
-			fwrite($fp, "\$adminConfig['PHPDateTimeFormat']='m/d/Y, h:i a';\n\t");
-			fwrite($fp, "\$adminConfig['senderName']='Membership management';\n\t");
-			fwrite($fp, "\$adminConfig['senderEmail']='admin@".$_SERVER['SERVER_NAME']."';\n\t");
-			fwrite($fp, "\$adminConfig['approvalSubject']='Your membership is now approved';\n\t");
-			fwrite($fp, "\$adminConfig['approvalMessage']=\"Dear member,\\n\\nYour membership is now approved by the admin. You can log in to your account here:\\nhttp://".$_SERVER['HTTP_HOST'].str_replace("/admin", "", rtrim(dirname($_SERVER['PHP_SELF']), '/\\'))."\\n\\nRegards,\\nAdmin\";\n\t");
-
-			fwrite($fp, "?>");
-			fclose($fp);         
-		}
-	}
-
-	include($conFile);
 
 	// check if membership system exists
 	setupMembership();
@@ -88,7 +60,7 @@
 	// do we have an admin log out request?
 	if($_GET['signOut']==1){
 		logOutUser();
-		?><META HTTP-EQUIV="Refresh" CONTENT="0;url=index.php"><?php
+		?><META HTTP-EQUIV="Refresh" CONTENT="0;url=../index.php"><?php
 		exit;
 	}
 
@@ -97,10 +69,10 @@
 		// is there a user trying to log in?
 		if(!checkUser($_POST['username'], $_POST['password'])){
 			// display login form
-			include("$currDir/pageLogin.php");
+			?><META HTTP-EQUIV="Refresh" CONTENT="0;url=../index.php?signIn=1"><?php
 			exit;
 		}else{
-			redirect('pageHome.php');
+			redirect('admin/pageHome.php');
 		}
 	}
 

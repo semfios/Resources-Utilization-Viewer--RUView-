@@ -4,7 +4,7 @@
 	include("$currDir/incHeader.php");
 
 	// image paths
-	$p=array(
+	$p=array(   
 	);
 
 	if(!count($p)) exit;
@@ -13,7 +13,7 @@
 	$t=$_GET['table'];
 	if(!in_array($t, array_keys($p))){
 		?>
-		<h1>Rebuild thumbnails</h1>
+		<div class="page-header"><h1>Rebuild thumbnails</h1></div>
 		<form method="get" action="pageRebuildThumbnails.php" target="_blank">
 			Use this utility if you have one or more image fields in a table that don't have thumbnails or
 			have thumbnails with incorrect dimensions.<br><br>
@@ -30,7 +30,7 @@
 	}
 
 	?>
-	<h1>Rebuilding thumbnails of '<i><?php echo $t; ?></i>' table ...</h1>
+	<div class="page-header"><h1>Rebuilding thumbnails of '<i><?php echo $t; ?></i>' table ...</h1></div>
 	Don't close this page until you see a confirmation message that all thumbnails have been built.<br><br>
 	<div style="font-weight: bold; color: red; width:700px;" id="status">Status: still rebuilding thumbnails, please wait ...</div>
 	<br>
@@ -41,7 +41,7 @@
 			$res=sql("select `$f` from `$t`", $eo);
 			echo "Building thumbnails for '<i>$f</i>' field...<br>";
 			unset($tv); unset($dv);
-			while($row=mysql_fetch_row($res)){
+			while($row=db_fetch_row($res)){
 				if($row[0]!=''){
 					$tv[]=$row[0];
 					$dv[]=$row[0];

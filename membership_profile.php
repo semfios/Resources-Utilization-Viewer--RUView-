@@ -4,6 +4,8 @@
 	include("$currDir/language.php");
 	include("$currDir/lib.php");
 
+	$adminConfig = config('adminConfig');
+
 	/* no access for guests */
 	$mi = getMemberInfo();
 	if(!$mi['username'] || $mi['group'] == $adminConfig['anonymousGroup']){
@@ -12,6 +14,11 @@
 
 	/* save profile */
 	if($_POST['action'] == 'saveProfile'){
+		if(!csrf_token(true)){
+			echo $Translation['error:'];
+			exit;
+		}
+
 		/* process inputs */
 		$email=isEmail($_POST['email']);
 		$custom1=makeSafe($_POST['custom1']);
@@ -41,6 +48,11 @@
 
 	/* change password */
 	if($_POST['action'] == 'changePassword' && $mi['username'] != $adminConfig['adminUsername']){
+		if(!csrf_token(true)){
+			echo $Translation['error:'];
+			exit;
+		}
+
 		/* process inputs */
 		$oldPassword=$_POST['oldPassword'];
 		$newPassword=$_POST['newPassword'];
@@ -84,127 +96,181 @@
 	}
 
 	/* the profile page view */
-	include("$currDir/header.php"); ?>
+	include_once("$currDir/header.php"); ?>
 
-	<style>
-		#content {font-family: arial; font-size: large;}
-		#content input{font-family: arial; font-size: large; color: navy;}
-		#content legend{font-size: x-large; color: navy; padding: 0 5px;}
-		#content fieldset{border-radius: 10px; border: solid 1px silver; margin: 0 10px 10px; padding: 10px;}
-		#content fieldset:hover{background-color: lightyellow;}
-		#content input:focus{background-color: lightgoldenrodyellow;}
-		#content label{display: block; cursor: pointer; margin-top: 0.75em;}
-		#permissions span{display: block; float: left; width: 17em; margin: 0 0.5em;}
-		#notify,#loader{ width: 60%; margin: 10px auto; text-align: center; border: solid 1px Green; padding: 3px; border-radius: 3px;}
-		#notify{background-color: LightGreen;}
-		#loader{background-color: LightYellow;}
-	</style>
-
-	<div id="content" style="max-width: 94%; margin: 20px auto;">
+	<div class="page-header">
 		<h1><?php echo sprintf($Translation['Hello user'], $mi['username']); ?></h1>
+	</div>
+	<div id="notify" class="alert alert-success" style="display: none;"></div>
+	<div id="loader" style="display: none;"><i class="glyphicon glyphicon-refresh"></i> <?php echo $Translation['Loading ...']; ?></div>
 
-		<div id="notify" style="display: none;"></div>
-		<div id="loader" style="display: none;"><img src="loading.gif" align="top" hspace="3" /> <?php echo $Translation['Loading ...']; ?></div>
+	<?php echo csrf_token(); ?>
+	<div class="row">
 
-		<div id="left-column" style="margin: 0 10px; width: 29em; float: left;">
+		<div class="col-md-6">
 
-			<fieldset id="profile">
-				<legend><?php echo $Translation['Your info']; ?></legend>
-
-				<label for="email"><?php echo $Translation['email']; ?></label>
-				<input type="text" id="email" name="email" value="<?php echo $mi['email']; ?>" size="50" />
-
-				<?php for($i=1; $i<5; $i++){ ?>
-					<label for="custom<?php echo $i; ?>"><?php echo $adminConfig['custom'.$i]; ?></label>
-					<input type="text" id="custom<?php echo $i; ?>" name="custom<?php echo $i; ?>" value="<?php echo $mi['custom'][$i-1]; ?>" size="50" />
-				<?php } ?>
-
-				<div class="buttons" style="float: right; margin-top: 10px;">
-					<button id="update-profile" class="positive" type="button"><img src="update.gif"><?php echo $Translation['Update profile']; ?></button>
+			<!-- user info form -->
+			<div class="panel panel-info">
+				<div class="panel-heading">
+					<h3 class="panel-title">
+						<i class="glyphicon glyphicon-info-sign"></i>
+						<?php echo $Translation['Your info']; ?>
+					</h3>
 				</div>
-			</fieldset>
+				<div class="panel-body">
+					<fieldset id="profile">
+						<div class="form-group">
+							<label for="email"><?php echo $Translation['email']; ?></label>
+							<input type="email" id="email" name="email" value="<?php echo $mi['email']; ?>" class="form-control">
+						</div>
 
-			<fieldset id="permissions">
-				<legend><?php echo $Translation['Your access permissions']; ?></legend>
+						<?php for($i=1; $i<5; $i++){ ?>
+							<div class="form-group">
+								<label for="custom<?php echo $i; ?>"><?php echo $adminConfig['custom'.$i]; ?></label>
+								<input type="text" id="custom<?php echo $i; ?>" name="custom<?php echo $i; ?>" value="<?php echo $mi['custom'][$i-1]; ?>" class="form-control">
+							</div>
+						<?php } ?>
 
-				<div style="font-size: small; line-height: 1.5em;">
-					<div><strong><?php echo $Translation['Legend']; ?></strong></div>
-					<span><img src="admin/images/stop_icon.gif" hspace="3" align="top" /><?php echo $Translation['Not allowed']; ?></span>
-					<span><img src="admin/images/member_icon.gif" hspace="3" align="top" /><?php echo $Translation['Only your own records']; ?></span>
-					<span><img src="admin/images/members_icon.gif" hspace="3" align="top" /><?php echo $Translation['All records owned by your group']; ?></span>
-					<span><img src="admin/images/approve_icon.gif" hspace="3" align="top" /><?php echo $Translation['All records']; ?></span>
+						<div class="row">
+							<div class="col-md-4 col-md-offset-4">
+								<button id="update-profile" class="btn btn-success btn-block" type="button"><i class="glyphicon glyphicon-ok"></i> <?php echo $Translation['Update profile']; ?></button>
+							</div>
+						</div>
+					</fieldset>
 				</div>
+			</div>
 
-				<table width="100%">
-					<tr>
-						<td class="TableHeader"><?php echo $Translation['Table']; ?></td>
-						<td class="TableHeader"><?php echo $Translation['View']; ?></td>
-						<td class="TableHeader"><?php echo $Translation['Add New']; ?></td>
-						<td class="TableHeader"><?php echo $Translation['Edit']; ?></td>
-						<td class="TableHeader"><?php echo $Translation['Delete']; ?></td>
-					</tr>
+			<!-- access permissions -->
+			<div class="panel panel-info">
+				<div class="panel-heading">
+					<h3 class="panel-title">
+						<i class="glyphicon glyphicon-lock"></i>
+						<?php echo $Translation['Your access permissions']; ?>
+					</h3>
+				</div>
+				<div class="panel-body">
+					<p><strong><?php echo $Translation['Legend']; ?></strong></p>
+					<div class="row">
+						<div class="col-xs-2 col-md-1 text-right"><img src="admin/images/stop_icon.gif"></div>
+						<div class="col-xs-10 col-md-5"><?php echo $Translation['Not allowed']; ?></div>
+						<div class="col-xs-2 col-md-1 text-right"><img src="admin/images/member_icon.gif"></div>
+						<div class="col-xs-10 col-md-5"><?php echo $Translation['Only your own records']; ?></div>
+					</div>
+					<div class="row">
+						<div class="col-xs-2 col-md-1 text-right"><img src="admin/images/members_icon.gif"></div>
+						<div class="col-xs-10 col-md-5"><?php echo $Translation['All records owned by your group']; ?></div>
+						<div class="col-xs-2 col-md-1 text-right"><img src="admin/images/approve_icon.gif"></div>
+						<div class="col-xs-10 col-md-5"><?php echo $Translation['All records']; ?></div>
+					</div>
 
-					<?php foreach($permissions as $tn => $perm){ ?>
-						<tr class="colorize">
-							<td class="TableHeader"><img src="<?php echo $userTables[$tn][2]; ?>" hspace="3" align="top" /><a href="<?php echo $tn; ?>_view.php"><?php echo $userTables[$tn][0]; ?></a></td>
-							<td class="TableBody" style="text-align: center;"><img src="admin/images/<?php echo permIcon($perm[2]); ?>" /></td>
-							<td class="TableBody" style="text-align: center;"><img src="admin/images/<?php echo ($perm[1] ? 'approve' : 'stop'); ?>_icon.gif" /></td>
-							<td class="TableBody" style="text-align: center;"><img src="admin/images/<?php echo permIcon($perm[3]); ?>" /></td>
-							<td class="TableBody" style="text-align: center;"><img src="admin/images/<?php echo permIcon($perm[4]); ?>" /></td>
-						</tr>
-					<?php } ?>
-				</table>
-			</fieldset>
+					<p class="vspacer-lg"></p>
+
+					<div class="table-responsive">
+						<table class="table table-striped table-hover table-bordered" id="permissions">
+							<thead>
+								<tr>
+									<th><?php echo $Translation['Table']; ?></th>
+									<th class="text-center"><?php echo $Translation['View']; ?></th>
+									<th class="text-center"><?php echo $Translation['Add New']; ?></th>
+									<th class="text-center"><?php echo $Translation['Edit']; ?></th>
+									<th class="text-center"><?php echo $Translation['Delete']; ?></th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach($permissions as $tn => $perm){ ?>
+									<tr>
+										<td><img src="<?php echo $userTables[$tn][2]; ?>"> <a href="<?php echo $tn; ?>_view.php"><?php echo $userTables[$tn][0]; ?></a></td>
+										<td class="text-center"><img src="admin/images/<?php echo permIcon($perm[2]); ?>" /></td>
+										<td class="text-center"><img src="admin/images/<?php echo ($perm[1] ? 'approve' : 'stop'); ?>_icon.gif" /></td>
+										<td class="text-center"><img src="admin/images/<?php echo permIcon($perm[3]); ?>" /></td>
+										<td class="text-center"><img src="admin/images/<?php echo permIcon($perm[4]); ?>" /></td>
+									</tr>
+								<?php } ?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
 
 		</div>
 
-		<div id="right-column" style="margin: 0 10px; width: 29em; float: left;">
+		<div class="col-md-6">
 
-			<fieldset id="ip-address">
-				<legend><?php echo $Translation['Your IP address']; ?></legend>
-				<strong><?php echo $mi['IP']; ?></strong>
-			</fieldset>
+			<!-- group and IP address -->
+			<div class="panel panel-info">
+				<div class="panel-body">
+					<div class="form-group">
+						<label><?php echo $Translation['Your IP address']; ?></label>
+						<div class="form-control-static"><?php echo $mi['IP']; ?></div>
+					</div>
+				</div>
+			</div>
 
-			<fieldset id="group">
-				<legend><?php echo $Translation['group']; ?></legend>
-				<strong><?php echo $mi['group']; ?></strong>
-			</fieldset>
+			<!-- group and IP address -->
+			<div class="panel panel-info">
+				<div class="panel-body">
+					<div class="form-group">
+						<label><?php echo $Translation['group']; ?></label>
+						<div class="form-control-static"><?php echo $mi['group']; ?></div>
+					</div>
+				</div>
+			</div>
 
 			<?php if($mi['username'] != $adminConfig['adminUsername']){ ?>
-				<fieldset id="change-password">
-					<legend><?php echo $Translation['Change your password']; ?></legend>
-
-					<div id="password-change-form">
-						<label for="old-password"><?php echo $Translation['Old password']; ?></label>
-						<input type="password" id="old-password" size="20" />
-
-						<label for="new-password"><?php echo $Translation['new password']; ?></label>
-						<input type="password" id="new-password" size="20" />
-						<span id="password-strength" style="font-size: small;"></span>
-
-						<label for="confirm-password"><?php echo $Translation['confirm password']; ?></label>
-						<input type="password" id="confirm-password" size="20" />
-						<span id="confirm-status"></span>
-
-						<div class="buttons" style="float: right; margin-top: 10px;">
-							<button id="update-password" class="positive" type="button" style="width: 160px;"><img src="update.gif"><?php echo $Translation['Update password']; ?></button>
-						</div>
+				<!-- change password -->
+				<div class="panel panel-info">
+					<div class="panel-heading">
+						<h3 class="panel-title">
+							<i class="glyphicon glyphicon-asterisk"></i><i class="glyphicon glyphicon-asterisk"></i>
+							<?php echo $Translation['Change your password']; ?>
+						</h3>
 					</div>
-				</fieldset>
-			<?php }?>
+					<div class="panel-body">
+						<fieldset id="change-password">
+							<div id="password-change-form">
+
+								<div class="form-group">
+									<label for="old-password"><?php echo $Translation['Old password']; ?></label>
+									<input type="password" id="old-password" autocomplete="off" class="form-control">
+								</div>
+
+								<div class="form-group">
+									<label for="new-password"><?php echo $Translation['new password']; ?></label>
+									<input type="password" id="new-password" autocomplete="off" class="form-control">
+									<p id="password-strength" class="help-block"></p>
+								</div>
+
+								<div class="form-group">
+									<label for="confirm-password"><?php echo $Translation['confirm password']; ?></label>
+									<input type="password" id="confirm-password" autocomplete="off" class="form-control">
+									<p id="confirm-status" class="help-block"></p>
+								</div>
+
+								<div class="row">
+									<div class="col-md-4 col-md-offset-4">
+										<button id="update-password" class="btn btn-success btn-block" type="button"><i class="glyphicon glyphicon-ok"></i> <?php echo $Translation['Update password']; ?></button>
+									</div>
+								</div>
+
+							</div>
+						</fieldset>
+					</div>
+				</div>
+			<?php } ?>
+
 		</div>
 
 	</div>
 
 
 	<script>
-		document.observe("dom:loaded", function() {
+		$j(function() {
 			if('<?php echo addslashes($_GET['notify']); ?>' != '') notify('<?php echo addslashes($_GET['notify']); ?>');
 
 			$('update-profile').observe('click', function(){
 				post2(
 					'<?php echo basename(__FILE__); ?>',
-					{ action: 'saveProfile', email: $F('email'), custom1: $F('custom1'), custom2: $F('custom2'), custom3: $F('custom3'), custom4: $F('custom4') },
+					{ action: 'saveProfile', email: $F('email'), custom1: $F('custom1'), custom2: $F('custom2'), custom3: $F('custom3'), custom4: $F('custom4'), csrf_token: $F('csrf_token') },
 					'notify', 'profile', 'loader', 
 					'<?php echo basename(__FILE__); ?>?notify=<?php echo urlencode($Translation['Your profile was updated successfully']); ?>'
 				);
@@ -223,7 +289,7 @@
 
 					post2(
 						'<?php echo basename(__FILE__); ?>',
-						{ action: 'changePassword', oldPassword: $F('old-password'), newPassword: $F('new-password') },
+						{ action: 'changePassword', oldPassword: $F('old-password'), newPassword: $F('new-password'), csrf_token: $F('csrf_token') },
 						'notify', 'password-change-form', 'loader', 
 						'<?php echo basename(__FILE__); ?>?notify=<?php echo urlencode($Translation['Your password was changed successfully']); ?>'
 					);
@@ -274,4 +340,4 @@
 		}
 	?>
 
-	<?php include("$currDir/footer.php"); ?>
+	<?php include_once("$currDir/footer.php"); ?>

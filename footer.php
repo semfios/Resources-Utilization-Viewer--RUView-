@@ -1,35 +1,20 @@
-		<style>
-			#years-nav{
-				font-size: 30px;
-				font-weight: bold;
-				width: 300px;
-				border: dotted 1px silver;
-				text-align: center;
-				margin: 0 auto;
-			}
-			#years-nav a:hover{
-				text-decoration: underline;
-				background-color: Gold;
-			}
-			#years-nav a{
-				font-weight: normal;
-				font-size: 20px;
-				margin: 0 30px;
-				text-decoration: none;
-				color: DarkBlue;
-			}
-		</style>
-		
-		<script>
-			document.observe("dom:loaded", function() {
-				/* Add link for resource utilization chart into the nav menu */
-				var nmc = $$('select[name=nav_menu]')[0].options.length;
-				var chart = new Option("Chart", "chart.php");
+			<!-- Add footer template above here -->
+			<div class="clearfix"></div>
+			<?php if(!$_REQUEST['Embedded']){ ?>
+				<div style="height: 70px;" class="hidden-print"></div>
+			<?php } ?>
 
-				$$('select[name=nav_menu]')[0].options[nmc] = chart;
-			});
-		</script>
-		
-		<!-- Add footer template above here -->
-		</body>
-	</html>
+			<?php if(!$_REQUEST['Embedded']){ ?>
+				<!-- AppGini powered by notice -->
+				<div style="height: 60px;" class="hidden-print"></div>
+				<nav class="navbar navbar-default navbar-fixed-bottom" role="navigation">
+					<p class="navbar-text"><small>
+						Powered by <a class="navbar-link" href="http://bigprof.com/appgini/" target="_blank">BigProf AppGini 5.41</a>
+					</small></p>
+				</nav>
+			<?php } ?>
+
+		</div> <!-- /div class="container" -->
+		<?php if(is_file(dirname(__FILE__) . '/hooks/footer-extras.php')){ include(dirname(__FILE__).'/hooks/footer-extras.php'); } ?>
+	</body>
+</html>

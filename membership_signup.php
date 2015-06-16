@@ -3,175 +3,210 @@
 	include("$currDir/defaultLang.php");
 	include("$currDir/language.php");
 	include("$currDir/lib.php");
-	include("$currDir/header.php");
+	include_once("$currDir/header.php");
 
-	if($_POST['signUp']!=''){
+	$adminConfig = config('adminConfig');
+
+	if(!$cg = sqlValue("select count(1) from membership_groups where allowSignup=1")){
+		$noSignup = true;
+		echo error_message($Translation['sign up disabled']);
+		exit;
+	}
+
+	if($_POST['signUp'] != ''){
 		// receive data
-		$memberID=makeSafe(strtolower($_POST['newUsername']));
-		$email=isEmail($_POST['email']);
-		$password=$_POST['password'];
-		$confirmPassword=$_POST['confirmPassword'];
-		$groupID=intval($_POST['groupID']);
-		$custom1=makeSafe($_POST['custom1']);
-		$custom2=makeSafe($_POST['custom2']);
-		$custom3=makeSafe($_POST['custom3']);
-		$custom4=makeSafe($_POST['custom4']);
+		$memberID = is_allowed_username($_POST['newUsername']);
+		$email = isEmail($_POST['email']);
+		$password = $_POST['password'];
+		$confirmPassword = $_POST['confirmPassword'];
+		$groupID = intval($_POST['groupID']);
+		$custom1 = makeSafe($_POST['custom1']);
+		$custom2 = makeSafe($_POST['custom2']);
+		$custom3 = makeSafe($_POST['custom3']);
+		$custom4 = makeSafe($_POST['custom4']);
 
 		// validate data
-		if($memberID==''){
-			?><div class="Error"><?php echo $Translation['username empty']; ?></div><?php
+		if(!$memberID){
+			echo error_message($Translation['username invalid']);
 			exit;
 		}
-		if(strlen($password)<4 || trim($password)!=$password){
-			?><div class="Error"><?php echo $Translation['password invalid']; ?></div><?php
+		if(strlen($password) < 4 || trim($password) != $password){
+			echo error_message($Translation['password invalid']);
 			exit;
 		}
-		if($password!=$confirmPassword){
-			?><div class="Error"><?php echo $Translation['password no match']; ?></div><?php
-			exit;
-		}
-		if(sqlValue("select count(1) from membership_users where lcase(memberID)='$memberID'")){
-			?><div class="Error"><?php echo $Translation['username exists']; ?></div><?php
+		if($password != $confirmPassword){
+			echo error_message($Translation['password no match']);
 			exit;
 		}
 		if(!$email){
-			?><div class="Error"><?php echo $Translation['email invalid']; ?></div><?php
+			echo error_message($Translation['email invalid']);
 			exit;
 		}
 		if(!sqlValue("select count(1) from membership_groups where groupID='$groupID' and allowSignup=1")){
-			?><div class="Error"><?php echo $Translation['group invalid']; ?></div><?php
+			echo error_message($Translation['group invalid']);
 			exit;
 		}
 
 		// save member data
-		$needsApproval=sqlValue("select needsApproval from membership_groups where groupID='$groupID'");
+		$needsApproval = sqlValue("select needsApproval from membership_groups where groupID='$groupID'");
 		sql("INSERT INTO `membership_users` set memberID='$memberID', passMD5='".md5($password)."', email='$email', signupDate='".@date('Y-m-d')."', groupID='$groupID', isBanned='0', isApproved='".($needsApproval==1 ? '0' : '1')."', custom1='$custom1', custom2='$custom2', custom3='$custom3', custom4='$custom4', comments='member signed up through the registration form.'", $eo);
 
 		// admin mail notification
-		if($adminConfig['notifyAdminNewMembers']==2 && !$needsApproval){
-			@mail($adminConfig['senderEmail'], '[resources_utilization] New member signup', "A new member has signed up for resources_utilization.\n\nMember name: $memberID\nMember group: ".sqlValue("select name from membership_groups where groupID='$groupID'")."\nMember email: $email\nIP address: {$_SERVER['REMOTE_ADDR']}\nCustom fields:\n" . ($adminConfig['custom1'] ? "{$adminConfig['custom1']}: $custom1\n" : '') . ($adminConfig['custom2'] ? "{$adminConfig['custom2']}: $custom2\n" : '') . ($adminConfig['custom3'] ? "{$adminConfig['custom3']}: $custom3\n" : '') . ($adminConfig['custom4'] ? "{$adminConfig['custom4']}: $custom4\n" : ''), "From: {$adminConfig['senderEmail']}\r\n\r\n");
-		}elseif($adminConfig['notifyAdminNewMembers']>=1 && $needsApproval){
-			@mail($adminConfig['senderEmail'], '[resources_utilization] New member awaiting approval', "A new member has signed up for resources_utilization.\n\nMember name: $memberID\nMember group: ".sqlValue("select name from membership_groups where groupID='$groupID'")."\nMember email: $email\nIP address: {$_SERVER['REMOTE_ADDR']}\nCustom fields:\n" . ($adminConfig['custom1'] ? "{$adminConfig['custom1']}: $custom1\n" : '') . ($adminConfig['custom2'] ? "{$adminConfig['custom2']}: $custom2\n" : '') . ($adminConfig['custom3'] ? "{$adminConfig['custom3']}: $custom3\n" : '') . ($adminConfig['custom4'] ? "{$adminConfig['custom4']}: $custom4\n" : ''), "From: {$adminConfig['senderEmail']}\r\n\r\n");
+		/* ---- application name as provided in AppGini is used here ---- */
+		if($adminConfig['notifyAdminNewMembers'] == 2 && !$needsApproval){
+			@mail($adminConfig['senderEmail'], '[resources utilization] New member signup', "A new member has signed up for resources utilization.\n\nMember name: $memberID\nMember group: ".sqlValue("select name from membership_groups where groupID='$groupID'")."\nMember email: $email\nIP address: {$_SERVER['REMOTE_ADDR']}\nCustom fields:\n" . ($adminConfig['custom1'] ? "{$adminConfig['custom1']}: $custom1\n" : '') . ($adminConfig['custom2'] ? "{$adminConfig['custom2']}: $custom2\n" : '') . ($adminConfig['custom3'] ? "{$adminConfig['custom3']}: $custom3\n" : '') . ($adminConfig['custom4'] ? "{$adminConfig['custom4']}: $custom4\n" : ''), "From: {$adminConfig['senderEmail']}\r\n\r\n");
+		}elseif($adminConfig['notifyAdminNewMembers'] >= 1 && $needsApproval){
+			@mail($adminConfig['senderEmail'], '[resources utilization] New member awaiting approval', "A new member has signed up for resources utilization.\n\nMember name: $memberID\nMember group: ".sqlValue("select name from membership_groups where groupID='$groupID'")."\nMember email: $email\nIP address: {$_SERVER['REMOTE_ADDR']}\nCustom fields:\n" . ($adminConfig['custom1'] ? "{$adminConfig['custom1']}: $custom1\n" : '') . ($adminConfig['custom2'] ? "{$adminConfig['custom2']}: $custom2\n" : '') . ($adminConfig['custom3'] ? "{$adminConfig['custom3']}: $custom3\n" : '') . ($adminConfig['custom4'] ? "{$adminConfig['custom4']}: $custom4\n" : ''), "From: {$adminConfig['senderEmail']}\r\n\r\n");
 		}
 
 		// hook: member_activity
 		if(function_exists('member_activity')){
-			$args=array();
+			$args = array();
 			member_activity(getMemberInfo($memberID), ($needsApproval ? 'pending' : 'automatic'), $args);
 		}
 
 		// redirect to thanks page
-		$redirect=($needsApproval ? '' : '?redir=1');
+		$redirect = ($needsApproval ? '' : '?redir=1');
 		redirect("membership_thankyou.php$redirect");
 
-		// exit
 		exit;
 	}
 
-	if(!$cg=sqlValue("select count(1) from membership_groups where allowSignup=1")){
-		$noSignup=TRUE;
-		?>
-		<div class="Error"><?php echo $Translation['sign up disabled']; ?></div>
-		<?php
-	}
-
 	// drop-down of groups allowing self-signup
-	$groupsDropDown = preg_replace('/<option.*?value="".*?><\/option>/i', '', htmlSQLSelect('groupID', "select groupID, concat(name, if(needsApproval=1, ' *', ' ')) from membership_groups where allowSignup=1 order by name", ($cg==1 ? sqlValue("select groupID from membership_groups where allowSignup=1 order by name limit 1") : 0 )));
+	$groupsDropDown = preg_replace('/<option.*?value="".*?><\/option>/i', '', htmlSQLSelect('groupID', "select groupID, concat(name, if(needsApproval=1, ' *', ' ')) from membership_groups where allowSignup=1 order by name", ($cg == 1 ? sqlValue("select groupID from membership_groups where allowSignup=1 order by name limit 1") : 0 )));
+	$groupsDropDown = str_replace('<select ', '<select class="form-control" ', $groupsDropDown);
 ?>
 
 <?php if(!$noSignup){ ?>
-	<div style="margin: 0 auto; width: 550px;">
-		<form method="post" action="membership_signup.php" onSubmit="return jsValidateSignup();" id="login-form">
-			<h1 class="buttons">
-				<?php echo $Translation['sign up here']; ?>
-				<a href="index.php?signIn=1"><?php echo $Translation['sign in']; ?></a>
-			</h1>
-			<fieldset id="inputs">
-				<label for="username"><?php echo $Translation['username']; ?></label>
-				<input type="text" required="" placeholder="<?php echo $Translation['username']; ?>" id="username" name="newUsername">
-				<span id="usernameAvailable" style="display: none;"><img title="<?php echo str_ireplace(array("'", '"', '<memberid>'), '', $Translation['user available']); ?>" src="update.gif" /></span>
-				<span id="usernameNotAvailable" style="display: none;"><img title="<?php echo str_ireplace(array("'", '"', '<memberid>'), '', $Translation['username exists']); ?>" src="delete.gif" /></span>
+	<div class="row">
+		<div class="hidden-xs col-sm-4 col-md-6 col-lg-8" id="signup_splash">
+			<!-- customized splash content here -->
+		</div>
 
-				<div style="float: left;">
-					<label for="password"><?php echo $Translation['password']; ?></label>
-					<input style="width: 200px;" type="password" required="" placeholder="<?php echo $Translation['password']; ?>" id="password" name="password">
+		<div class="col-sm-8 col-md-6 col-lg-4">
+			<div class="panel panel-success">
+
+				<div class="panel-heading">
+					<h1 class="panel-title"><strong><?php echo $Translation['sign up here']; ?></strong></h1>
 				</div>
-				<div style="float: right;">
-					<label for="confirmPassword"><?php echo $Translation['confirm password']; ?></label>
-					<input style="width: 200px;" type="password" required="" placeholder="<?php echo $Translation['confirm password']; ?>" id="confirmPassword" name="confirmPassword">
-				</div>
-				<div style="clear: both;"></div>
 
-				<label for="email"><?php echo $Translation['email']; ?></label>
-				<input type="text" required="" placeholder="<?php echo $Translation['email']; ?>" id="email" name="email">
+				<div class="panel-body">
+					<form method="post" action="membership_signup.php" onSubmit="return jsValidateSignup();">
+						<div class="form-group">
+							<label for="username" class="control-label"><?php echo $Translation['username']; ?></label>
+							<input class="form-control input-lg" type="text" required="" placeholder="<?php echo $Translation['username']; ?>" id="username" name="newUsername">
+							<span id="usernameAvailable" class="help-block invisible"><i class="glyphicon glyphicon-ok"></i> <?php echo str_ireplace(array("'", '"', '<memberid>'), '', $Translation['user available']); ?></span>
+							<span id="usernameNotAvailable" class="help-block invisible"><i class="glyphicon glyphicon-remove"></i> <?php echo str_ireplace(array("'", '"', '<memberid>'), '', $Translation['username invalid']); ?></span>
+						</div>
 
-				<label for="group"><?php echo $Translation['group']; ?></label>
-				<?php echo $groupsDropDown; ?>
-				<label><?php echo $Translation['groups *']; ?></label><br/>
+						<div class="row">
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label for="password" class="control-label"><?php echo $Translation['password']; ?></label>
+									<input class="form-control" type="password" required="" placeholder="<?php echo $Translation['password']; ?>" id="password" name="password">
+								</div>
+							</div>
+							<div class="col-sm-6">
+								<div class="form-group">
+									<label for="confirmPassword" class="control-label"><?php echo $Translation['confirm password']; ?></label>
+									<input class="form-control" type="password" required="" placeholder="<?php echo $Translation['confirm password']; ?>" id="confirmPassword" name="confirmPassword">
+								</div>
+							</div>
+						</div>
 
-				<?php
-					for($cf = 1; $cf <= 4; $cf++){
-						if($adminConfig['custom'.$cf] != ''){
-							?>
-							<label for="custom<?php echo $cf; ?>"><?php echo $adminConfig['custom'.$cf]; ?></label>
-							<input type="text" placeholder="<?php echo $adminConfig['custom'.$cf]; ?>" id="custom<?php echo $cf; ?>" name="custom<?php echo $cf; ?>">
-							<?php
-						}
-					}
-				?>
+						<div class="form-group">
+							<label for="email" class="control-label"><?php echo $Translation['email']; ?></label>
+							<input class="form-control" type="text" required="" placeholder="<?php echo $Translation['email']; ?>" id="email" name="email">
+						</div>
 
-				<div class="buttons"><button class="positive" value="signUp" id="submit" type="submit" name="signUp"><?php echo $Translation['sign up']; ?></button></div>
-			</fieldset>
-		</form>
-	</div>
+						<div class="form-group">
+							<label for="group" class="control-label"><?php echo $Translation['group']; ?></label>
+							<?php echo $groupsDropDown; ?>
+							<span class="help-block"><?php echo $Translation['groups *']; ?></span>
+						</div>
+
+						<?php
+							if(!$adminConfig['hide_custom_user_fields_during_signup']){
+								for($cf = 1; $cf <= 4; $cf++){
+									if($adminConfig['custom'.$cf] != ''){
+										?>
+										<div class="row form-group">
+											<div class="col-sm-3"><label class="control-label" for="custom<?php echo $cf; ?>"><?php echo $adminConfig['custom'.$cf]; ?></label></div>
+											<div class="col-sm-9"><input class="form-control" type="text" placeholder="<?php echo $adminConfig['custom'.$cf]; ?>" id="custom<?php echo $cf; ?>" name="custom<?php echo $cf; ?>"></div>
+										</div>
+										<?php
+									}
+								}
+							}
+						?>
+
+						<div class="row">
+							<div class="col-sm-offset-3 col-sm-6">
+								<button class="btn btn-primary btn-lg btn-block" value="signUp" id="submit" type="submit" name="signUp"><?php echo $Translation['sign up']; ?></button>
+							</div>
+						</div>
+
+					</form>
+				</div> <!-- /div class="panel-body" -->
+			</div> <!-- /div class="panel ..." -->
+		</div> <!-- /div class="col..." -->
+	</div> <!-- /div class="row" -->
 
 	<script>
-		document.observe("dom:loaded", function() {
-			$('username').focus();
+		$j(function() {
+			show_one_block_only('usernameAvailable', 'usernameNotAvailable');
+			$j('#username').focus();
 
-			$$('#usernameAvailable, #usernameNotAvailable').invoke('observe', 'click', function(){ $('username').focus(); });
+			$j('#usernameAvailable, #usernameNotAvailable').click(function(){ $j('#username').focus(); });
 
-			$('username').observe('keyup', function(){
-				if($F('username').length >= 4){
+			$j('#username').keyup(function(){
+				if($j('#username').val().length){
 					checkUser();
 				}
 			});
 
 			$('username').observe('blur', function(){
+				if(!$F('username').length){
+					$('username').up().addClassName('has-error');
+					show_one_block_only('usernameAvailable', 'usernameNotAvailable');
+					return;
+				}else{
+					$('username').up().removeClassName('has-error');
+				}
 				checkUser();
 			});
 
 			/* password strength feedback */
-			$('password').observe('keyup', function(){
-				ps = passwordStrength($F('password'), $F('username'));
+			jQuery('#password').bind('keyup blur', function(){
+				var ps = passwordStrength(jQuery('#password').val(), jQuery('#username').val());
 
 				if(ps == 'strong'){
-					$('password').removeClassName('redBG').removeClassName('yellowBG').addClassName('greenBG');
-					$('password').title = '<?php echo htmlspecialchars($Translation['Password strength: strong']); ?>';
+					jQuery('#password').parents('.form-group').removeClass('has-error has-warning').addClass('has-success');
+					jQuery('#password').attr('title', '<?php echo htmlspecialchars($Translation['Password strength: strong']); ?>');
 				}else if(ps == 'good'){
-					$('password').removeClassName('redBG').removeClassName('greenBG').addClassName('yellowBG');
-					$('password').title = '<?php echo htmlspecialchars($Translation['Password strength: good']); ?>';
+					jQuery('#password').parents('.form-group').removeClass('has-success has-error').addClass('has-warning');
+					jQuery('#password').attr('title', '<?php echo htmlspecialchars($Translation['Password strength: good']); ?>');
 				}else{
-					$('password').removeClassName('greenBG').removeClassName('yellowBG').addClassName('redBG');
-					$('password').title = '<?php echo htmlspecialchars($Translation['Password strength: weak']); ?>';
+					jQuery('#password').parents('.form-group').removeClass('has-success has-warning').addClass('has-error');
+					jQuery('#password').attr('title', '<?php echo htmlspecialchars($Translation['Password strength: weak']); ?>');
 				}
 			});
 
 			/* inline feedback of confirm password */
-			$('confirmPassword').observe('keyup', function(){
-				if($F('confirmPassword') != $F('password') || !$F('confirmPassword').length){
-					$('confirmPassword').removeClassName('greenBG').addClassName('redBG');
+			jQuery('#confirmPassword').bind('keyup blur', function(){
+				if(jQuery('#confirmPassword').val() != jQuery('#password').val() || !jQuery('#confirmPassword').val().length){
+					jQuery('#confirmPassword').parent().removeClass('has-success').addClass('has-error');
 				}else{
-					$('confirmPassword').removeClassName('redBG').addClassName('greenBG');
+					jQuery('#confirmPassword').parent().removeClass('has-error').addClass('has-success');
 				}
 			});
 
 			/* inline feedback of email */
 			$('email').observe('change', function(){
 				if(validateEmail($F('email'))){
-					$('email').removeClassName('redBG').addClassName('greenBG');
+					$('email').up().removeClassName('has-error').addClassName('has-success');
 				}else{
-					$('email').removeClassName('greenBG').addClassName('redBG');
+					$('email').up().removeClassName('has-success').addClassName('has-error');
 				}
 			});
 		});
@@ -186,19 +221,48 @@
 					method: 'get',
 					parameters: { 'memberID': $F('username') },
 					onCreate: function(){
-						$('usernameAvailable').hide();
-						$('usernameNotAvailable').hide();
+						$('usernameAvailable').addClassName('invisible');
+						$('usernameNotAvailable').addClassName('invisible');
+						$('usernameNotAvailable').up().removeClassName('has-error').removeClassName('has-success');
+						show_one_block_only('usernameAvailable', 'usernameNotAvailable');
 					},
 					onSuccess: function(resp){
 						var ua=resp.responseText;
 						if(ua.match(/\<!-- AVAILABLE --\>/)){
-							$('usernameAvailable').style.display='inline';
+							$('usernameAvailable').removeClassName('invisible').removeClassName('hidden');
+							$('usernameAvailable').up().addClassName('has-success');
 						}else{
-							$('usernameNotAvailable').style.display='inline';
+							$('usernameNotAvailable').removeClassName('invisible').removeClassName('hidden');
+							$('usernameNotAvailable').up().addClassName('has-error');
 						}
+						show_one_block_only('usernameAvailable', 'usernameNotAvailable');
 					}
 				}
 			);
+		}
+
+		function show_one_block_only(id1, id2){
+			var id1_invisible = jQuery('#' + id1).hasClass('invisible');
+			var id2_invisible = jQuery('#' + id2).hasClass('invisible');
+			var id1_hidden = jQuery('#' + id1).hasClass('hidden');
+			var id2_hidden = jQuery('#' + id2).hasClass('hidden');
+
+			     if( id1_invisible &&  id2_invisible &&  id1_hidden &&  id2_hidden) jQuery('#' + id1).removeClass('hidden');
+			else if( id1_invisible &&  id2_invisible &&  id1_hidden && !id2_hidden) /* do nothing */;
+			else if( id1_invisible &&  id2_invisible && !id1_hidden &&  id2_hidden) /* do nothing */;
+			else if( id1_invisible &&  id2_invisible && !id1_hidden && !id2_hidden) jQuery('#' + id2).addClass('hidden');
+			else if( id1_invisible && !id2_invisible &&  id1_hidden &&  id2_hidden) jQuery('#' + id2).removeClass('hidden');
+			else if( id1_invisible && !id2_invisible &&  id1_hidden && !id2_hidden) /* do nothing */;
+			else if( id1_invisible && !id2_invisible && !id1_hidden &&  id2_hidden) { jQuery('#' + id1).addClass('hidden'); jQuery('#' + id2).removeClass('hidden'); }
+			else if( id1_invisible && !id2_invisible && !id1_hidden && !id2_hidden) jQuery('#' + id1).addClass('hidden');
+			else if(!id1_invisible &&  id2_invisible &&  id1_hidden &&  id2_hidden) jQuery('#' + id1).removeClass('hidden');
+			else if(!id1_invisible &&  id2_invisible &&  id1_hidden && !id2_hidden) { jQuery('#' + id1).removeClass('hidden'); jQuery('#' + id2).addClass('hidden'); }
+			else if(!id1_invisible &&  id2_invisible && !id1_hidden &&  id2_hidden) /* do nothing */;
+			else if(!id1_invisible &&  id2_invisible && !id1_hidden && !id2_hidden) jQuery('#' + id2).addClass('hidden');
+			else if(!id1_invisible && !id2_invisible &&  id1_hidden &&  id2_hidden) jQuery('#' + id1).removeClass('hidden');
+			else if(!id1_invisible && !id2_invisible &&  id1_hidden && !id2_hidden) /* do nothing */;
+			else if(!id1_invisible && !id2_invisible && !id1_hidden &&  id2_hidden) /* do nothing */;
+			else if(!id1_invisible && !id2_invisible && !id1_hidden && !id2_hidden) jQuery('#' + id2).addClass('hidden');
 		}
 
 		/* validate data before submitting */
@@ -210,13 +274,13 @@
 
 			/* passwords not matching? */
 			if(p1 != p2){
-				Modalbox.show('<div class="Error" style="width: 90%; margin: 0;"><?php echo addslashes($Translation['password no match']); ?></div>', { title: "<?php echo addslashes($Translation['error:']); ?>", afterHide: function(){ $('confirmPassword').focus(); } });
+				modal_window({ message: '<div class="alert alert-danger"><?php echo addslashes($Translation['password no match']); ?></div>', title: "<?php echo addslashes($Translation['error:']); ?>", close: function(){ jQuery('#confirmPassword').focus(); } });
 				return false;
 			}
 
 			/* user exists? */
-			if($('usernameNotAvailable').visible()){
-				Modalbox.show('<div class="Error" style="width: 90%; margin: 0;"><?php echo addslashes($Translation['username exists']); ?></div>', { title: "<?php echo addslashes($Translation['error:']); ?>", afterHide: function(){ $('username').focus(); } });
+			if(!$('usernameNotAvailable').hasClassName('invisible')){
+				modal_window({ message: '<div class="alert alert-danger"><?php echo addslashes($Translation['username invalid']); ?></div>', title: "<?php echo addslashes($Translation['error:']); ?>", close: function(){ jQuery('#username').focus(); } });
 				return false;
 			}
 
@@ -226,14 +290,9 @@
 	</script>
 
 	<style>
-		#login-form{ width: 500px; }
-		#email,#custom1,#custom2,#custom3,#custom4{ width: 450px !important; }
 		#usernameAvailable,#usernameNotAvailable{ cursor: pointer; }
-		.greenBG{ border-color: Green !important; background-color: LightGreen !important; }
-		.yellowBG{ border-color: Gold !important; background-color: LightYellow !important; }
-		.redBG{ border-color: Red !important; background-color: LighRed !important; }
 	</style>
 
 <?php } ?>
 
-<?php include("$currDir/footer.php"); ?>
+<?php include_once("$currDir/footer.php"); ?>

@@ -3,228 +3,212 @@
 	include("$currDir/defaultLang.php");
 	include("$currDir/language.php");
 	include("$currDir/lib.php");
-	include("$currDir/header.php");
+	include_once("$currDir/header.php");
+
+	$adminConfig = config('adminConfig');
+
+	$reset_expiry = 86400; // time validity of reset key in seconds
 
 #_______________________________________________________________________________
 # Step 4: Final step; change the password
 #_______________________________________________________________________________
-	if($_POST['changePassword'] && $_SESSION['resetUsername']!=$adminConfig['adminUsername']){
-		echo StyleSheet();
-		if($_POST['key']!=$_SESSION['resetKey'] || !$_POST['key']){
-			?>
-			<div class="Error">
-				<?php echo $Translation['password reset invalid']; ?>
+	if($_POST['changePassword'] && $_POST['key']){
+		$expiry_limit = time() - $reset_expiry - 900; // give an extra tolerence of 15 minutes
+		$res = sql("select * from membership_users where pass_reset_key='" . makeSafe($_POST['key']) . "' and pass_reset_expiry>$expiry_limit limit 1", $eo);
+
+		if($row = db_fetch_assoc($res)){
+			if($_POST['newPassword'] != $_POST['confirmPassword'] || !$_POST['newPassword']){
+				?>
+				<div class="alert alert-danger">
+					<?php echo $Translation['password no match']; ?>
 				</div>
-			<?php
-			exit;
-		}
+				<?php
 
-		if($_POST['newPassword']!=$_POST['confirmPassword'] || !$_POST['newPassword']){
+				include_once("$currDir/footer.php");
+				exit;
+			}
+
+			sql("update membership_users set passMD5='" . md5($_POST['newPassword']) . "', pass_reset_expiry=NULL, pass_reset_key=NULL where lcase(memberID)='" . addslashes($row['memberID']) . "'", $eo);
 			?>
-			<div class="Error">
-				<?php echo $Translation['password no match']; ?>
-				</div>
-			<?php
-			exit;
-		}
-
-		sql("update membership_users set passMD5='".md5($_POST['newPassword'])."' where lcase(memberID)='".strtolower($_SESSION['resetUsername'])."'", $eo);
-
-		?>
-		<div style="width:500px; margin:0px auto; text-align:left;">
-			<div class="TableTitle">
-				<?php echo $Translation['password reset done']; ?>
+			<div class="row">
+				<div class="col-md-6 col-md-offset-3">
+					<div class="alert alert-info">
+						<i class="glyphicon glyphicon-info-sign"></i>
+						<?php echo $Translation['password reset done']; ?>
+					</div>
 				</div>
 			</div>
-		<?php
+			<?php
+		}else{
+			?>
+			<div class="alert alert-danger">
+				<?php echo $Translation['password reset invalid']; ?>
+			</div>
+			<?php
+		}
 
+		include_once("$currDir/footer.php");
 		exit;
 	}
 #_______________________________________________________________________________
 # Step 3: This is the special link that came to the member by email. This is
 #         where the member enters his new password.
 #_______________________________________________________________________________
-	if($_GET['key']){
-		echo StyleSheet();
-		if($_GET['key']==$_SESSION['resetKey'] &&  $_SESSION['resetUsername']!=$adminConfig['adminUsername']){
-			$res=sql("select * from membership_users where lcase(memberID)='".strtolower($_SESSION['resetUsername'])."'", $eo);
-			if(!$row=mysql_fetch_assoc($res)){
-				?>
-				<div class="Error">
-					<?php echo $Translation['password reset invalid']; ?>
-					</div>
-				<?php
-				exit;
-			}
+	if($_GET['key'] != ''){
+		$expiry_limit = time() - $reset_expiry;
+		$res = sql("select * from membership_users where pass_reset_key='" . makeSafe($_GET['key']) . "' and pass_reset_expiry>$expiry_limit limit 1", $eo);
+
+		if($row = db_fetch_assoc($res)){
 			?>
-			<div align="center">
-				<form method="post" action="membership_passwordReset.php">
-					<table border="0" cellspacing="1" cellpadding="4" align="center" width="500">
-						<tr>
-							<td colspan="2" class="TableHeader">
-								<div class="TableTitle"><?php echo $Translation['password change']; ?></div>
-								</td>
-							</tr>
-						<tr>
-							<td align="right" class="TableHeader" width="160" <?php echo $highlight; ?>>
-								<?php echo $Translation['username']; ?>
-								</td>
-							<td align="left" class="TableBody" width="340">
-								<?php echo $row['memberID']; ?>
-								</td>
-							</tr>
-						<tr>
-							<td align="right" class="TableHeader">
-								<?php echo $Translation['new password']; ?>
-								</td>
-							<td align="left" class="TableBody">
-								<input type="password" name="newPassword" value="" size="20" class="TextBox">
-								</td>
-							</tr>
-						<tr>
-							<td align="right" class="TableHeader">
-								<?php echo $Translation['confirm password']; ?>
-								</td>
-							<td align="left" class="TableBody">
-								<input type="password" name="confirmPassword" value="" size="20" class="TextBox">
-								</td>
-							</tr>
-						<tr>
-							<td colspan="2" align="right" class="TableHeader">
-								<input type="submit" name="changePassword" value="<?php echo $Translation['ok']; ?>">
-								</td>
-							</tr>
-						</table>
+			<div class="page-header"><h1><?php echo $Translation['password change']; ?></h1></div>
+
+			<div class="row">
+				<div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3 col-lg-4 col-lg-offset-4">
+					<form method="post" action="membership_passwordReset.php">
+						<div class="form-group">
+							<label for="name" class="control-label"><?php echo $Translation['username']; ?></label>
+							<p class="lead"><?php echo $row['memberID']; ?></p>
+						</div>
+						<div class="form-group">
+							<label for="newPassword" class="control-label"><?php echo $Translation['new password']; ?></label>
+							<input type="password" class="form-control" id="newPassword" name="newPassword" placeholder="<?php echo htmlspecialchars($Translation['new password']); ?>">
+						</div>
+						<div class="form-group">
+							<label for="confirmPassword" class="control-label"><?php echo $Translation['confirm password']; ?></label>
+							<input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="<?php echo htmlspecialchars($Translation['confirm password']); ?>">
+						</div>
+
+						<div class="row">
+							<div class="col-sm-offset-3 col-sm-6">
+								<button class="btn btn-primary btn-lg btn-block" value="changePassword" id="changePassword" type="submit" name="changePassword"><?php echo $Translation['ok']; ?></button>
+							</div>
+						</div>
+
 						<input type="hidden" name="key" value="<?php echo $_GET['key']; ?>">
 					</form>
 				</div>
+			</div>
 			<?php
-			exit;
 		}else{
 			?>
-			<div class="Error">
+			<div class="alert alert-danger">
 				<?php echo $Translation['password reset invalid']; ?>
-				</div>
+			</div>
 			<?php
-			exit;
 		}
+
+		include_once("$currDir/footer.php");
+		exit;
 	}
 #_______________________________________________________________________________
 # Step 2: Send email to member containing the reset link
 #_______________________________________________________________________________
 	if($_POST['reset']){
-		$username=makeSafe(strtolower(trim($_POST['username'])));
-		$email=isEmail($_POST['email']);
+		$username = makeSafe(strtolower(trim($_POST['username'])));
+		$email = isEmail(trim($_POST['email']));
 
 		if((!$username && !$email) || ($username==$adminConfig['adminUsername'])){
 			redirect("membership_passwordReset.php?emptyData=1");
+			exit;
 		}
 
-		echo StyleSheet();
+		?><div class="page-header"><h1><?php echo $Translation['password reset']; ?></h1></div><?php
 
-		$res=sql("select * from membership_users where lcase(memberID)='$username' or email='$email' limit 1", $eo);
-		if(!$row=mysql_fetch_assoc($res)){
+		$where = '';
+		if($username){
+			$where = "lcase(memberID)='{$username}'";
+		}elseif($email){
+			$where = "email='{$email}'";
+		}
+		$res = sql("select * from membership_users where {$where} limit 1", $eo);
+		if(!$row=db_fetch_assoc($res)){
 			?>
-			<div class="Error">
+			<div class="alert alert-danger">
 				<?php echo $Translation['password reset invalid']; ?>
-				</div>
+			</div>
 			<?php
-			exit;
 		}else{
 			// avoid admin password change
 			if($row['memberID']==$adminConfig['adminUsername']){
 				?>
-				<div class="Error">
+				<div class="alert alert-danger">
 					<?php echo $Translation['password reset invalid']; ?>
-					</div>
+				</div>
 				<?php
+
+				include_once("$currDir/footer.php");
 				exit;
 			}
 
-			// generate and store unique key
-			$key=md5(microtime());
-			$_SESSION['resetKey']=$key;
-			$_SESSION['resetUsername']=$row['memberID'];
+			// generate and store password reset key, if no valid key already exists
+			$no_valid_key = ($row['pass_reset_key'] == '' || ($row['pass_reset_key'] != '' && $row['pass_reset_expiry'] < (time() - $reset_expiry)));
+			$key = ($no_valid_key ? md5(microtime()) : $row['pass_reset_key']);
+			$expiry = ($no_valid_key ? time() + $reset_expiry : $row['pass_reset_expiry']);
+			@db_query("update membership_users set pass_reset_key='$key', pass_reset_expiry='$expiry' where memberID='" . addslashes($row['memberID']) . "'");
 
 			// determine password reset URL
-			$host=$_SERVER['HTTP_HOST'];
-			$uri=rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-			$http=(strtolower($_SERVER['HTTPS']) == 'on' ? 'https:' : 'http:');
-			$ResetLink="$http//$host$uri/"."membership_passwordReset.php?key=$key";
+			$ResetLink = application_url("membership_passwordReset.php?key=$key");
 
 			// send reset instructions
 			@mail($row['email'], $Translation['password reset subject'], str_replace('<ResetLink>', $ResetLink, $Translation['password reset message']), "From: ".$adminConfig['senderName']." <".$adminConfig['senderEmail'].">");
-		}
 
-		// display confirmation
-		?>
-		<div style="width:500px; margin:0px auto; text-align:left;">
-			<div class="TableTitle">
-				<?php echo $Translation['password reset ready']; ?>
+			// display confirmation
+			?>
+			<div class="row">
+				<div class="col-md-6 col-md-offset-3">
+					<div class="alert alert-info">
+						<i class="glyphicon glyphicon-info-sign" style="font-size: xx-large; float: left; margin: 0 10px;"></i>
+						<?php echo $Translation['password reset ready']; ?>
+					</div>
 				</div>
 			</div>
-		<?php
+			<?php
+		}
+
+		include_once("$currDir/footer.php");
 		exit;
 	}
 
 #_______________________________________________________________________________
 # Step 1: get the username or email of the member who wants to reset his password
 #_______________________________________________________________________________
-	echo StyleSheet();
-
-	if($_GET['emptyData']){
-		$highlight="style=\"color: red;\"";
-	}
 
 	?>
+	<div class="page-header"><h1><?php echo $Translation['password reset']; ?></h1></div>
 
+	<div class="row">
+		<div class="col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3 col-lg-4 col-lg-offset-4">
+			<form method="post" action="membership_passwordReset.php">
+				<div class="alert alert-info"><?php echo $Translation['password reset details']; ?></div>
 
-	<div align="center">
-		<form method="post" action="membership_passwordReset.php">
-			<table border="0" cellspacing="1" cellpadding="4" align="center" width="500">
-				<tr>
-					<td colspan="2" class="TableHeader">
-						<div class="TableTitle"><?php echo $Translation['password reset']; ?></div>
-						</td>
-					</tr>
-				<tr>
-					<td colspan="2" class="TableBody" align="left">
-						<div class="TableBody"><?php echo $Translation['password reset details']; ?></div>
-						</td>
-					</tr>
-				<tr>
-					<td align="right" class="TableHeader" width="160" <?php echo $highlight; ?>>
-						<?php echo $Translation['username']; ?>
-						</td>
-					<td align="left" class="TableBody" width="340">
-						<input type="text" name="username" value="" size="20" class="TextBox">
-						</td>
-					</tr>
-				<tr>
-					<td align="right" class="TableHeader" <?php echo $highlight; ?>>
-						<?php echo '<i>'.$Translation['or'].':</i> '.$Translation['email']; ?>
-						</td>
-					<td align="left" class="TableBody">
-						<input type="text" name="email" value="" size="45" class="TextBox">
-						</td>
-					</tr>
-				<tr>
-					<td colspan="2" align="right" class="TableHeader">
-						<input type="submit" name="reset" value="<?php echo $Translation['ok']; ?>">
-						</td>
-					</tr>
-				<tr>
-					<td colspan="2" align="center" class="TableHeader">
-						<?php echo $Translation['browse as guest']; ?>
-						</td>
-					</tr>
-				</table>
+				<div class="form-group">
+					<label for="username" class="control-label"><?php echo $Translation['username']; ?></label>
+					<input type="text" class="form-control" id="username" name="username" placeholder="<?php echo htmlspecialchars($Translation['username']); ?>">
+				</div>
+
+				<div class="form-group">
+					<label for="email" class="control-label"><?php echo '<i>'.$Translation['or'].':</i> '.$Translation['email']; ?></label>
+					<input type="email" class="form-control" id="email" name="email" placeholder="<?php echo htmlspecialchars($Translation['email']); ?>">
+				</div>
+
+				<div class="row">
+					<div class="col-sm-offset-3 col-sm-6">
+						<button class="btn btn-primary btn-lg btn-block" value="<?php echo htmlspecialchars($Translation['ok']); ?>" id="reset" type="submit" name="reset"><?php echo $Translation['ok']; ?></button>
+					</div>
+				</div>
+
+				<p style="margin-top: 1.5em;"><?php echo $Translation['browse as guest']; ?></p>
 			</form>
-		<br /><br />
-		<div class="TableFooter">
-			<b><a href=http://bigprof.com/appgini/>BigProf Software</a> - <?php echo $Translation['powered by']; ?> AppGini 5.00</b>
-			</div>
 		</div>
-	<?php
-?>
-<?php include("$currDir/footer.php"); ?>
+	</div>
+
+	<script>
+		jQuery(function(){
+			jQuery('#username').focus();
+			<?php  if($_GET['emptyData']){ ?>
+				jQuery('#username, #email').parent().addClass('has-error');
+			<?php } ?>
+		});
+	</script>
+
+<?php include_once("$currDir/footer.php"); ?>

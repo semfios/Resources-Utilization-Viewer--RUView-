@@ -67,7 +67,7 @@ Autocompleter.Base = Class.create({
           update.style.position = 'absolute';
           Position.clone(element, update, {
             setHeight: false,
-            offsetTop: element.offsetHeight
+            offsetTop: element.offsetHeight + document.viewport.getScrollOffsets()[1]
           });
         }
         Effect.Appear(update,{duration:0.15});

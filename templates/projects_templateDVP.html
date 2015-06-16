@@ -1,64 +1,40 @@
 <!-- Edit this file to change the layout of the detail view print preview page -->
 
-<style type="text/css"><!--  
-	@media print{.displayOnly {display: none;}}
-	td.TableHeaderPrint{
-		border-bottom: dotted 1px black;
-	}
-	.TableHeaderPrint{
-		font-weight: bold;
-	}
-	.TableTitlePrint{
-		font-size: 130%;
-		font-weight: bold;
-	}
-	.TableBodyPrint{
-		padding-left: .5em;
-		border-bottom: dotted 1px black;
-	}
-	*{
-		font-family: arial,sans-serif;
-	}
-	--></style><br />
-<table border="0" bordercolor="silver" cellpadding="2" cellspacing="0" width="100%">
-	<tr>
-		<td>
-			<div class=TableTitlePrint><%%DETAIL_VIEW_TITLE%%></div>
-			<div align="center" class="displayOnly buttons">
-				<button type="submit" id="back"><img src="deselect.gif" /> <%%TRANSLATION(Back)%%></button>
-				<button type="submit" id="deselect" name="deselect_x" value="1"><img src="deselect.gif" /> <%%TRANSLATION(Deselect)%%></button>
-				</div>
-			</td>
-		</tr>
-	<tr>
-		<td>
-			<table width="100%">
-				<tr>
-					<td class="TableHeaderPrint" valign="top" width="20%">
-						<div class="TableHeaderPrint" style="text-align: right;">ID</div>
-						</td>
-					<td class="TableBodyPrint" xwidth="300" valign="top"><%%VALUE(Id)%%>&nbsp;&nbsp;</td>
-					</tr>
-				<tr>
-					<td class="TableHeaderPrint" valign="top" width="20%">
-						<div class="TableHeaderPrint" style="text-align: right;">Name</div>
-						</td>
-					<td class="TableBodyPrint" xwidth="300" valign="top"><%%VALUE(Name)%%>&nbsp;&nbsp;</td>
-					</tr>
-				<tr>
-					<td class="TableHeaderPrint" valign="top" width="20%">
-						<div class="TableHeaderPrint" style="text-align: right;">Start Date</div>
-						</td>
-					<td class="TableBodyPrint" xwidth="300" valign="top"><%%COMBOTEXT(StartDate)%%>&nbsp;&nbsp;</td>
-					</tr>
-				<tr>
-					<td class="TableHeaderPrint" valign="top" width="20%">
-						<div class="TableHeaderPrint" style="text-align: right;">End Date</div>
-						</td>
-					<td class="TableBodyPrint" xwidth="300" valign="top"><%%COMBOTEXT(EndDate)%%>&nbsp;&nbsp;</td>
-					</tr>
-				</table>
-			</td>
-		</tr>
-	</table>
 
+<div class="panel-heading"><h3 class="panel-title">
+	<strong><%%DETAIL_VIEW_TITLE%%></strong>
+	<div class="hidden-print pull-right">
+		<button type="button" id="print" onclick="window.print();" title="<%%TRANSLATION(Print)%%>" class="btn btn-success"><i class="glyphicon glyphicon-print"></i></button>
+		<button type="submit" id="back" title="<%%TRANSLATION(Back)%%>" class="btn btn-warning"><i class="glyphicon glyphicon-remove"></i></button>
+	</div>
+	<div class="clearfix"></div>
+</h3></div>
+
+<div class="panel-body">
+	<fieldset class="form-horizontal">
+		<div class="form-group" style="border-bottom: dotted 1px #DDD;">
+			<label class="col-xs-3 control-label">ID</label>
+			<div class="col-xs-9">
+				<div class="form-control-static"><%%VALUE(Id)%%></div>
+			</div>
+		</div>
+		<div class="form-group" style="border-bottom: dotted 1px #DDD;">
+			<label class="col-xs-3 control-label">Name</label>
+			<div class="col-xs-9">
+				<div class="form-control-static"><%%VALUE(Name)%%></div>
+			</div>
+		</div>
+		<div class="form-group" style="border-bottom: dotted 1px #DDD;">
+			<label class="col-xs-3 control-label">Start Date</label>
+			<div class="col-xs-9">
+				<div class="form-control-static"><%%COMBOTEXT(StartDate)%%></div>
+			</div>
+		</div>
+		<div class="form-group" style="border-bottom: dotted 1px #DDD;">
+			<label class="col-xs-3 control-label">End Date</label>
+			<div class="col-xs-9">
+				<div class="form-control-static"><%%COMBOTEXT(EndDate)%%></div>
+			</div>
+		</div>
+	</fieldset>
+</div>

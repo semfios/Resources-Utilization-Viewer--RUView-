@@ -26,15 +26,15 @@
 	if($page<1){
 		$page=1;
 	}elseif($page>ceil($numGroups/$adminConfig['groupsPerPage']) && !$noResults){
-		redirect("pageViewGroups.php?page=".ceil($numGroups/$adminConfig['groupsPerPage']));
+		redirect("admin/pageViewGroups.php?page=".ceil($numGroups/$adminConfig['groupsPerPage']));
 	}
 
 	$start=($page-1)*$adminConfig['groupsPerPage'];
 
 ?>
-<h1>Groups</h1>
+<div class="page-header"><h1>Groups</h1></div>
 
-<table border="0" cellspacing="0" cellpadding="0">
+<table class="table table-striped">
 	<tr>
 		<td colspan="5" align="center">
 			<form method="get" action="pageViewGroups.php">
@@ -56,7 +56,7 @@
 <?php
 
 	$res=sql("select groupID, name, description from membership_groups $where limit $start, ".$adminConfig['groupsPerPage'], $eo);
-	while($row=mysql_fetch_row($res)){
+	while($row=db_fetch_row($res)){
 		$groupMembersCount=sqlValue("select count(1) from membership_users where groupID='$row[0]'");
 		?>
 		<tr>
@@ -92,22 +92,23 @@
 	<tr>
 		<td colspan="5">
 			<table width="100%" cellspacing="0">
+				<tr>
 				<td align="left" class="tdFooter">
 					<input type="button" onClick="window.location='pageViewGroups.php?searchGroups=<?php echo $searchHTML; ?>&page=<?php echo ($page>1 ? $page-1 : 1); ?>';" value="Previous">
 					</td>
 				<td align="center" class="tdFooter">
-					<?php echo "Displaying groups ".($start+1)." to ".($start+mysql_num_rows($res))." of $numGroups"; ?>
+					<?php echo "Displaying groups ".($start+1)." to ".($start+db_num_rows($res))." of $numGroups"; ?>
 					</td>
 				<td align="right" class="tdFooter">
 					<input type="button" onClick="window.location='pageViewGroups.php?searchGroups=<?php echo $searchHTML; ?>&page=<?php echo ($page<ceil($numGroups/$adminConfig['groupsPerPage']) ? $page+1 : ceil($numGroups/$adminConfig['groupsPerPage'])); ?>';" value="Next">
 					</td>
-			</td>
+			</tr></table></td>
 		</tr>
 	<tr>
 		<td colspan="5">
-			<table width="100%">
+			<table class="table">
 				<tr>
-					<td colspan="2"><br /><b>Key:</b></td>
+					<td colspan="2"><br><b>Key:</b></td>
 					</tr>
 				<tr>
 					<td><img src="images/edit_icon.gif"> Edit group details and permissions.</td>

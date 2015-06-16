@@ -1,12 +1,14 @@
+<?php if(!isset($Translation)) die('No direct access allowed.'); ?>
+<?php $current_table = 'projects'; ?>
 <script>
-	projectsGetChildrenRecordsList = function(command){
+	<?php echo $current_table; ?>GetChildrenRecordsList = function(command){
 		var param = {
 			ChildTable: "<?php echo $parameters['ChildTable']; ?>",
 			ChildLookupField: "<?php echo $parameters['ChildLookupField']; ?>",
 			SelectedID: "<?php echo addslashes($parameters['SelectedID']); ?>",
 			Page: <?php echo addslashes($parameters['Page']); ?>,
 			SortBy: <?php echo ($parameters['SortBy'] === false ? '""' : $parameters['SortBy']); ?>,
-			SortDirection: "<?php echo $parameters['SortDirection']; ?>"
+			SortDirection: '<?php echo $parameters['SortDirection']; ?>'
 		};
 		var panelID = "panel_<?php echo "{$parameters['ChildTable']}-{$parameters['ChildLookupField']}"; ?>";
 		var mbWidth = window.innerWidth * 0.9;
@@ -23,7 +25,7 @@
 					Page: param.Page,
 					SortBy: command.SortBy,
 					SortDirection: command.SortDirection,
-					Operation: "get-records"
+					Operation: 'get-records'
 				}, panelID, undefined, 'pc-loading');
 				break;
 			case 'page': /* next or previous page as provided by 'Page' */
@@ -38,26 +40,24 @@
 					Page: command.Page,
 					SortBy: param.SortBy,
 					SortDirection: param.SortDirection,
-					Operation: "get-records"
+					Operation: 'get-records'
 				}, panelID, undefined, 'pc-loading');
 				break;
 			case 'new': /* new record */
 				var url = $F(param.ChildTable + '_hclink') + '&addNew_x=1&Embedded=1';
-				Modalbox.show('<iframe src="' + url + '" seamless="seamless" width="' + (mbWidth - 40) + '" height="' + (mbHeight - 50) + '" sandbox="allow-forms allow-scripts allow-same-origin"></iframe>', {
-					loadingString: '<?php echo addslashes($Translation['Loading ...']); ?>',
-					afterHide: function(){ projectsGetChildrenRecordsList({ Verb: 'reload' }); },
-					width: mbWidth,
-					height: mbHeight,
+				modal_window({
+					url: url,
+					close: function(){ <?php echo $current_table; ?>GetChildrenRecordsList({ Verb: 'reload' }); },
+					size: 'full',
 					title: '<?php echo addslashes("{$config['tab-label']}: {$Translation['Add New']}"); ?>'
 				});
 				break;
 			case 'open': /* opens the detail view for given child record PK provided in 'ChildID' */
 				var url = '<?php echo "{$parameters['ChildTable']}_view.php?Embedded=1&SelectedID="; ?>' + escape(command.ChildID);
-				Modalbox.show('<iframe src="' + url + '" seamless="seamless" width="' + (mbWidth - 40) + '" height="' + (mbHeight - 50) + '" sandbox="allow-forms allow-scripts allow-same-origin"></iframe>', {
-					loadingString: '<?php echo addslashes($Translation['Loading ...']); ?>',
-					afterHide: function(){ projectsGetChildrenRecordsList({ Verb: 'reload' }); },
-					width: mbWidth,
-					height: mbHeight,
+				modal_window({
+					url: url,
+					close: function(){ <?php echo $current_table; ?>GetChildrenRecordsList({ Verb: 'reload' }); },
+					size: 'full',
 					title: '<?php echo addslashes($config['tab-label']); ?>'
 				});
 				break;
@@ -69,75 +69,96 @@
 					Page: param.Page,
 					SortBy: param.SortBy,
 					SortDirection: param.SortDirection,
-					Operation: "get-records"
+					Operation: 'get-records'
 				}, panelID, undefined, 'pc-loading');
 				break;
 		}
 	};
 </script>
 
-<table cellpadding="0" border="0" cellspacing="1" width="100%">
-	<tr>
-		<td class="toolbar" colspan="<?php echo (count($config['display-fields']) + ($config['open-detail-view-on-click'] ? 1 : 0)); ?>">
-			<?php if($config['display-add-new']){ ?><div title="<?php echo addslashes($Translation['Add New']); ?>" onclick="projectsGetChildrenRecordsList({ Verb: 'new' });"><img src="addNew.gif" /></div><?php } ?>
-			<?php if($config['display-refresh']){ ?><div onclick="projectsGetChildrenRecordsList({ Verb: 'reload' });"><img src="arrow_refresh.png" /></div><?php } ?>
-		</td>
-	</tr>
-	<tr>
-		<?php if(is_array($config['display-fields'])) foreach($config['display-fields'] as $fieldIndex => $fieldLabel){ ?>
-			<td 
-				class="TableHeader"
-			<?php if($config['sortable-fields'][$fieldIndex]){ ?>
-				onclick="projectsGetChildrenRecordsList({
-					Verb: 'sort', 
-					SortBy: <?php echo $fieldIndex; ?>, 
-					SortDirection: '<?php echo ($parameters['SortBy'] == $fieldIndex && $parameters['SortDirection'] == 'asc' ? 'desc' : 'asc'); ?>'
-				});"
-				style="cursor: pointer;"
+<div class="row">
+	<div class="col-xs-11 col-md-12">
+
+		<?php if($config['display-add-new']){ ?>
+			<?php if(stripos($_SERVER['HTTP_USER_AGENT'], 'msie ')){ ?>
+				<a href="<?php echo $parameters['ChildTable']; ?>_view.php?filterer_<?php echo $parameters['ChildLookupField']; ?>=<?php echo urlencode($parameters['SelectedID']); ?>&addNew_x=1" target="_viewchild" class="btn btn-success hspacer-sm vspacer-md"><i class="glyphicon glyphicon-plus-sign"></i> <?php echo html_attr($Translation['Add New']); ?></a>
+			<?php }else{ ?>
+				<a href="#" onclick="<?php echo $current_table; ?>GetChildrenRecordsList({ Verb: 'new' }); return false;" class="btn btn-success hspacer-sm vspacer-md"><i class="glyphicon glyphicon-plus-sign"></i> <?php echo html_attr($Translation['Add New']); ?></a>
 			<?php } ?>
-				>
-				<?php if($parameters['SortBy'] == $fieldIndex && $parameters['SortDirection'] == 'desc'){ ?>
-					<img src="asc.gif" style="margin: 1px;" width="12" />
-				<?php }elseif($parameters['SortBy'] == $fieldIndex && $parameters['SortDirection'] == 'asc'){ ?>
-					<img src="desc.gif" style="margin: 1px;" width="12"  />
-				<?php } ?>
-				<?php echo $fieldLabel; ?>
-			</td>
 		<?php } ?>
-		<?php if($config['open-detail-view-on-click']){ ?>
-			<td class="TableHeader">&nbsp;</td>
-		<?php } ?>
-	</tr>
+		<?php if($config['display-refresh']){ ?><a href="#" onclick="<?php echo $current_table; ?>GetChildrenRecordsList({ Verb: 'reload' }); return false;" class="btn btn-default hspacer-sm vspacer-md"><i class="glyphicon glyphicon-refresh"></i></a><?php } ?>
 
-	<?php if(is_array($records)) foreach($records as $pkValue => $record){ $i = 1 - $i; ?>
-	<tr class="colorize">
-		<td class="<?php echo "{$parameters['ChildTable']}-{$parameters['ChildLookupField']}"; ?> <?php echo ($i ? 'TableBody' : 'TableBodySelected'); ?>" id="<?php echo "{$parameters['ChildTable']}-{$parameters['ChildLookupField']}-" . addslashes($record[$config['child-primary-key-index']]); ?>" valign="top"><?php echo $record[1]; ?></td>
-		<td class="<?php echo "{$parameters['ChildTable']}-{$parameters['ChildLookupField']}"; ?> <?php echo ($i ? 'TableBody' : 'TableBodySelected'); ?>" id="<?php echo "{$parameters['ChildTable']}-{$parameters['ChildLookupField']}-" . addslashes($record[$config['child-primary-key-index']]); ?>" valign="top"><?php echo $record[2]; ?></td>
-		<td class="<?php echo "{$parameters['ChildTable']}-{$parameters['ChildLookupField']}"; ?> <?php echo ($i ? 'TableBody' : 'TableBodySelected'); ?>" id="<?php echo "{$parameters['ChildTable']}-{$parameters['ChildLookupField']}-" . addslashes($record[$config['child-primary-key-index']]); ?>" valign="top"><?php echo $record[3]; ?></td>
-		<?php if($config['open-detail-view-on-click']){ ?>
-			<td onclick="projectsGetChildrenRecordsList({ Verb: 'open', ChildID: '<?php echo addslashes($record[$config['child-primary-key-index']]); ?>'});" class="<?php echo ($i ? 'TableBody' : 'TableBodySelected'); ?> view-on-click"><img src="view.gif" /></td>
-		<?php } ?>
-	</tr>
-	<?php } ?>
 
-	<tr>
-		<td class="TableFooter" colspan="<?php echo (count($config['display-fields']) + ($config['open-detail-view-on-click'] ? 1 : 0)); ?>">
-			<div style="float: left;">
-				<?php if($totalMatches){ ?>
-					<img align="left" src="deselect.gif" style="cursor: pointer; margin-top: 3px;" onclick="projectsGetChildrenRecordsList({ Verb: 'page', Page: 'previous' });" />
-					<img align="left" src="nextPage.gif" style="cursor: pointer; margin-top: 3px;" onclick="projectsGetChildrenRecordsList({ Verb: 'page', Page: 'next' });" />
-					<?php if($config['show-page-progress']){ ?>
-						<span style="float: right; margin: 10px;">
-							<?php $firstRecord = ($parameters['Page'] - 1) * $config['records-per-page'] + 1; ?>
-							<?php echo str_replace(array('<FirstRecord>', '<LastRecord>', '<RecordCount>'), array($firstRecord, $firstRecord + count($records) - 1, $totalMatches), $Translation['records x to y of z']); ?>
-						</span>
+		<div class="table-responsive">
+			<table class="table table-striped table-hover table-condensed table-bordered">
+				<thead>
+					<tr>
+						<?php if($config['open-detail-view-on-click']){ ?>
+							<th>&nbsp;</th>
+						<?php } ?>
+						<?php if(is_array($config['display-fields'])) foreach($config['display-fields'] as $fieldIndex => $fieldLabel){ ?>
+							<th 
+								<?php if($config['sortable-fields'][$fieldIndex]){ ?>
+									onclick="<?php echo $current_table; ?>GetChildrenRecordsList({
+										Verb: 'sort', 
+										SortBy: <?php echo $fieldIndex; ?>, 
+										SortDirection: '<?php echo ($parameters['SortBy'] == $fieldIndex && $parameters['SortDirection'] == 'asc' ? 'desc' : 'asc'); ?>'
+									});" 
+									style="cursor: pointer;" 
+								<?php } ?>
+								class="<?php echo "{$current_table}-{$config['display-field-names'][$fieldIndex]}"; ?>">
+								<?php echo $fieldLabel; ?>
+								<?php if($parameters['SortBy'] == $fieldIndex && $parameters['SortDirection'] == 'desc'){ ?>
+									<i class="glyphicon glyphicon-sort-by-attributes-alt text-warning"></i>
+								<?php }elseif($parameters['SortBy'] == $fieldIndex && $parameters['SortDirection'] == 'asc'){ ?>
+									<i class="glyphicon glyphicon-sort-by-attributes text-warning"></i>
+								<?php } ?>
+							</th>
+						<?php } ?>
+					</tr>
+				</thead>
+				<tbody>
+					<?php if(is_array($records)) foreach($records as $pkValue => $record){ ?>
+					<tr>
+						<?php if($config['open-detail-view-on-click']){ ?>
+							<?php if(stripos($_SERVER['HTTP_USER_AGENT'], 'msie ')){ ?>
+								<td class="view-on-click"><a href="<?php echo $parameters['ChildTable']; ?>_view.php?SelectedID=<?php echo html_attr($record[$config['child-primary-key-index']]); ?>" target="_viewchild" class="btn btn-default btn-block"><i class="glyphicon glyphicon-new-window hspacer-md"></i></a></td>
+							<?php }else{ ?>
+								<td class="view-on-click"><a href="#" onclick="<?php echo $current_table; ?>GetChildrenRecordsList({ Verb: 'open', ChildID: '<?php echo html_attr($record[$config['child-primary-key-index']]); ?>'}); return false;" class="btn btn-default btn-block"><i class="glyphicon glyphicon-new-window hspacer-md"></i></a></td>
+							<?php } ?>
+						<?php } ?>
+
+						<td class="<?php echo "{$parameters['ChildTable']}-{$config['display-field-names'][1]}"; ?>" id="<?php echo "{$parameters['ChildTable']}-{$config['display-field-names'][1]}-" . html_attr($record[$config['child-primary-key-index']]); ?>"><?php echo $record[1]; ?></td>
+						<td class="<?php echo "{$parameters['ChildTable']}-{$config['display-field-names'][2]}"; ?>" id="<?php echo "{$parameters['ChildTable']}-{$config['display-field-names'][2]}-" . html_attr($record[$config['child-primary-key-index']]); ?>"><?php echo $record[2]; ?></td>
+						<td class="<?php echo "{$parameters['ChildTable']}-{$config['display-field-names'][3]}"; ?>" id="<?php echo "{$parameters['ChildTable']}-{$config['display-field-names'][3]}-" . html_attr($record[$config['child-primary-key-index']]); ?>"><?php echo $record[3]; ?></td>
+					</tr>
 					<?php } ?>
-				<?php }else{ ?>
-					<?php echo $Translation['No matches found!']; ?>
-				<?php } ?>
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="<?php echo (count($config['display-fields']) + ($config['open-detail-view-on-click'] ? 1 : 0)); ?>">
+							<?php if($totalMatches){ ?>
+								<?php if($config['show-page-progress']){ ?>
+									<span style="margin: 10px;">
+										<?php $firstRecord = ($parameters['Page'] - 1) * $config['records-per-page'] + 1; ?>
+										<?php echo str_replace(array('<FirstRecord>', '<LastRecord>', '<RecordCount>'), array($firstRecord, $firstRecord + count($records) - 1, $totalMatches), $Translation['records x to y of z']); ?>
+									</span>
+								<?php } ?>
+							<?php }else{ ?>
+								<span class="text-danger" style="margin: 10px;"><?php echo $Translation['No matches found!']; ?></span>
+							<?php } ?>
+						</td>
+					</tr>
+				</tfoot>
+			</table>
+		</div>
+		<?php if($totalMatches){ ?>
+			<div class="row">
+				<div class="col-xs-12">
+					<button type="button" class="btn btn-default" onclick="<?php echo $current_table; ?>GetChildrenRecordsList({ Verb: 'page', Page: 'previous' });"><i class="glyphicon glyphicon-chevron-left"></i></button>
+					<button type="button" class="btn btn-default" onclick="<?php echo $current_table; ?>GetChildrenRecordsList({ Verb: 'page', Page: 'next' });"><i class="glyphicon glyphicon-chevron-right"></i></button>
+				</div>
 			</div>
-		</td>
-	</tr>
-</table>
-
-<script>colorize();</script>
+		<?php } ?>
+	</div><div class="col-xs-1 md-hidden lg-hidden"></div>
+</div>

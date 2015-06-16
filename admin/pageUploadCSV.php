@@ -1,4 +1,5 @@
 <?php
+	@ini_set('auto_detect_line_endings', 1);
 	define('MAXROWS', 500000); /* max records to import from the csv file per run */
 	define('BATCHSIZE', 200); /* number of records to insert per query */
 
@@ -19,7 +20,7 @@
 
 		if(!is_file($fn)){
 			?>
-			<div class="status" style="color: red;">
+			<div class="alert alert-danger">
 				Error: File '<?php echo $fn; ?>' not found.
 				</div>
 			<?php
@@ -36,15 +37,15 @@
 
 		$_SESSION['csvUploadFile']=$fn;
 
-		$arrPreviewData=getCSVArray(0, 10);
+		$arrPreviewData=getCSVArray(0, 10, false);
 		if(!is_array($arrPreviewData)){
-			die('<div class="status">Error: '. $arrPreviewData.'</div>');
+			die('<div class="alert alert-danger">Error: '. $arrPreviewData.'</div>');
 		}
 		?>
-		<h1>Preview the CSV data then confirm to import it ...</h1>
+		<div class="page-header"><h1>Preview the CSV data then confirm to import it ...</h1></div>
 
 		<form method="post" action="pageUploadCSV.php">
-		<table border=0 cellpadding=0 cellspacing=0>
+		<div class="table-responsive"><table class="table table-striped">
 			<tr><td colspan="<?php echo (count($arrPreviewData[0])+1); ?>"><i>Displaying the first 10 rows of the CSV file ...</i></td></tr>
 			<tr><td width="60" style="<?php echo $headCellStyle; ?>">&nbsp;</td><?php
 			foreach($arrPreviewData[0] as $fc){
@@ -55,15 +56,14 @@
 		for($i=1; $i<count($arrPreviewData); $i++){
 			?><tr><td style="<?php echo $headCellStyle; ?>" align="right"><?php echo $i; ?></td><?php
 			foreach($arrPreviewData[$i] as $fv){
-				$fv=stripslashes($fv);
-				?><td style="<?php echo $dataCellStyle; ?>"><?php echo($fv!='' ? (strlen($fv)>15 ? substr($fv, 0, 13).'...' : $fv) : '&nbsp;'); ?></td><?php
+				?><td style="<?php echo $dataCellStyle; ?>"><?php echo nl2br($fv != '' ? (strlen($fv) > 20 ? substr($fv, 0, 18) . '...' : $fv) : '&nbsp;'); ?></td><?php
 			}
 			?></tr><?php
 		}
 
 		?>
 
-		<tr><td align="right" colspan="<?php echo (count($arrPreviewData[0])+1); ?>" style="<?php echo $headCellStyle; ?>">
+		<tr><td align="left" colspan="<?php echo (count($arrPreviewData[0])+1); ?>" style="<?php echo $headCellStyle; ?>">
 			<input type="button" value="Change CSV settings" style="font-weight: bold;" onclick="
 				document.getElementById('advancedOptions').style.display='inline'; 
 				document.getElementById('applyCSVSettings').style.display='inline';
@@ -71,7 +71,7 @@
 				">
 			<input type="submit" name="csvImport" value="Confirm and import CSV data &gt;" style="font-weight: bold;" onclick="this.visibility='hidden';">
 			</td></tr>
-		</table>
+		</table></div>
 
 		<?php echo advancedCSVSettingsForm(); ?>
 		<div id="applyCSVSettings" style="width: 850px; text-align: right; visibility: hidden;">
@@ -101,7 +101,7 @@
 		}
 		if(!is_file($fn)){
 			?>
-			<div class="status" style="color: red;">
+			<div class="alert alert-danger">
 				Error: File '<?php echo $fn; ?>' not found.
 				</div>
 			<?php
@@ -124,14 +124,14 @@
 
 		// header
 		?>
-		<h1>Importing CSV data ...</h1>
+		<div class="page-header"><h1>Importing CSV data ...</h1></div>
 		<div style="width: 700px; text-align: left;">
 		<?php
 
 		// get tablename and csv data
-		$tn=$_POST['tableName'];
-		$arrCSVData=getCSVArray($csvStart);
-		echo 'Starting at record '.number_format($csvStart).' of '.number_format($_SESSION['csvEstimatedRecords']).' total estimated records ...<br />';
+		$tn = $_POST['tableName'];
+		$arrCSVData = getCSVArray($csvStart, 0, false);
+		echo 'Starting at record '.number_format($csvStart).' of '.number_format($_SESSION['csvEstimatedRecords']).' total estimated records ...<br>';
 
 		if(@count($arrCSVData)>1){
 			// backup table
@@ -141,9 +141,9 @@
 					sql("drop table if exists `$btn`", $eo);
 					sql("create table if not exists `$btn` select * from `$tn`", $eo);
 
-					echo "Table '$tn' backed up as '$btn'.<br /><br />";
+					echo "Table '$tn' backed up as '$btn'.<br><br>";
 				}else{
-					echo "Table '$tn' is empty, so no backup was done.<br /><br />";
+					echo "Table '$tn' is empty, so no backup was done.<br><br>";
 				}
 			}
 
@@ -161,7 +161,7 @@
 				for($j=$i; $j<($i+$batch) && $j<=$numRows; $j++){
 					// add slashes to field values if necessary
 					foreach($arrCSVData[$j] as $fi=>$fv){
-						$arrCSVData[$j][$fi]=addslashes(stripslashes($fv));
+						$arrCSVData[$j][$fi] = makeSafe($fv);
 					}
 					$valList=implode("','", $arrCSVData[$j]);
 					if($valList!='' && strlen($valList)>count($arrCSVData[$j])*3)
@@ -177,8 +177,8 @@
 
 				// execute batch
 				echo 'Importing batch '.(($i-1)/$batch + 1).' of '.$numBatches.': ';
-				if(!@mysql_query($insert)){
-					echo 'ERROR: '.mysql_error()."\n";
+				if(!@db_query($insert)){
+					echo 'ERROR: ' . db_error(db_link()) . "\n";
 				}else{
 					echo "Ok\n";
 				}
@@ -196,20 +196,20 @@
 			$_SESSION['csvUploadFile']='';
 			$_SESSION['csvEstimatedRecords']='';
 			?>
-			<br /><b><?php echo $numRows; ?> records inserted/updated in <?php echo round(array_sum(explode(' ', microtime())) - $t1, 3); ?> seconds. <i style="color: green;">Mission accomplished!</i></b>
-			<br /><br /><input type="button" name="assignOwner" value="Assign an owner to the imported records &gt;" style="font-weight: bold;" onclick="window.location='pageAssignOwners.php';">
+			<br><b><?php echo $numRows; ?> records inserted/updated in <?php echo round(array_sum(explode(' ', microtime())) - $t1, 3); ?> seconds. <i style="color: green;">Mission accomplished!</i></b>
+			<br><br><input type="button" name="assignOwner" value="Assign an owner to the imported records &gt;" style="font-weight: bold;" onclick="window.location='pageAssignOwners.php';">
 			<?php
 		}else{
 			?>
 			<META HTTP-EQUIV="Refresh" CONTENT="0;url=pageUploadCSV.php?csvImport=1&tableName=<?php echo urlencode($tn); ?>&csvBackupBeforeImport=0&csvUpdateIfPKExists=<?php echo $csvUpdateIfPKExists; ?>&csvIgnoreNRows=<?php echo $csvIgnoreNRows; ?>&csvCharsPerLine=<?php echo $csvCharsPerLine; ?>&csvFieldSeparator=<?echo urlencode($csvFieldSeparator); ?>&csvStart=<?php echo ($csvStart+$numRows); ?>&csvFieldDelimiter=<?php echo urlencode($csvFieldDelimiter); ?>">
-			<br /><b><?php echo $numRows; ?> records inserted/updated in <?php echo round(array_sum(explode(' ', microtime())) - $t1, 3); ?> seconds. <i style="color: red; background-color: #FFFF9C;">Please wait and don't close this page ...</i></b>
+			<br><b><?php echo $numRows; ?> records inserted/updated in <?php echo round(array_sum(explode(' ', microtime())) - $t1, 3); ?> seconds. <i style="color: red; background-color: #FFFF9C;">Please wait and don't close this page ...</i></b>
 			<?php
 		}
 		echo '</div>';
 
 	}else{ // first step
 		?>
-		<script language="javaScript">
+		<script>
 			<!--
 			function toggleAdvancedOptions(){
 				var t=document.getElementById('advancedOptions');
@@ -226,10 +226,10 @@
 			//-->
 			</script>
 
-		<h1>Import a CSV file to the database</h1>
+		<div class="page-header"><h1>Import a CSV file to the database</h1></div>
 
 		<form enctype="multipart/form-data" method="post" action="pageUploadCSV.php">
-			<table border="0" cellspacing="0" cellpadding="0" width="850">
+			<table class="table table-striped">
 				<tr>
 					<td colspan="2" class="tdFormCaption">
 						<div class="formFieldCaption">
@@ -250,7 +250,7 @@
 						<?php 
 							echo htmlSelect('tableName', array_keys($arrTables), array_values($arrTables), '');
 						?>
-						<br /><i>This is the table that you want to populate with data from the CSV file.</i>
+						<br><i>This is the table that you want to populate with data from the CSV file.</i>
 						</td>
 					</tr>
 				<tr>
@@ -258,7 +258,7 @@
 						<div class="formFieldCaption">CSV file</div>
 						</td>
 					<td align="left" class="tdFormInput">
-						<input type="file" name="csvFile" class="formTextBox"><br />
+						<input type="file" name="csvFile" class="formTextBox"><br>
 						</td>
 					</tr>
 				<tr>
@@ -270,7 +270,7 @@
 
 			<?php echo advancedCSVSettingsForm(); ?>
 
-			<table border="0" cellspacing="0" cellpadding="0" width="850">
+			<table class="table table-striped">
 				<tr>
 					<td align="right" class="tdFormCaption" valign="top" colspan="2">
 						<input type="submit" name="csvPreview" value="Preview CSV data &gt;" style="font-weight: bold;">
@@ -284,7 +284,7 @@
 	include("$currDir/incFooter.php");
 
 	##########################################################################
-	function getCSVArray($start=0, $numRows=0){
+	function getCSVArray($start = 0, $numRows = 0, $makeSafe = true){
 		if($numRows<1) $numRows=MAXROWS;
 
 		getCSVSettings($csvIgnoreNRows, $csvCharsPerLine, $csvFieldSeparator, $csvFieldDelimiter, $csvFieldNamesOnTop, $csvUpdateIfPKExists, $csvBackupBeforeImport);
@@ -294,8 +294,8 @@
 
 		// get field names of table
 		$res=sql('select * from `'.$tn.'` limit 1', $eo);
-		for($i=0; $i<mysql_num_fields($res); $i++){
-			$arrFieldName[]=mysql_field_name($res, $i);
+		for($i=0; $i<db_num_fields($res); $i++){
+			$arrFieldName[]=db_field_name($res, $i);
 		}
 
 		$fn=$_SESSION['csvUploadFile'];
@@ -396,8 +396,8 @@
 		while(($arr=fgetcsv($fp, $csvCharsPerLine, $csvFieldSeparator, $csvFieldDelimiter)) && $i<$numRows){
 			$arr=arrayResize($arr, count($arrCSVData[0]));
 			$arrCSVData[0]=arrayResize($arrCSVData[0], count($arr));
-			foreach($arr as $k=>$v){
-				$arr[$k]=makeSafe($v);
+			foreach($arr as $k => $v){
+				$arr[$k] = ($makeSafe ? makeSafe($v) : $v);
 			}
 			$arrCSVData[]=$arr;
 			$i++;
@@ -415,8 +415,8 @@
 
 		// get field names of table
 		$res=sql('select * from `'.$table.'` limit 1', $eo);
-		for($i=0; $i<mysql_num_fields($res); $i++){
-			$arrTableFieldName[]=mysql_field_name($res, $i);
+		for($i=0; $i<db_num_fields($res); $i++){
+			$arrTableFieldName[]=db_field_name($res, $i);
 		}
 
 		$arrCommon=array_intersect($arrTableFieldName, noSpaces($arr));
@@ -477,8 +477,8 @@
 		getCSVSettings($csvIgnoreNRows, $csvCharsPerLine, $csvFieldSeparator, $csvFieldDelimiter, $csvFieldNamesOnTop, $csvUpdateIfPKExists, $csvBackupBeforeImport);
 		ob_start();
 		?>
-		<div style="width: 850px; display: none;" id="advancedOptions">
-		<table border="0" cellspacing="0" cellpadding="0" width="850">
+		<div style="display: none;" id="advancedOptions">
+		<table class="table table-striped">
 			<tr>
 				<td align="right" class="tdFormCaption" valign="top" width="250">
 					<div class="formFieldCaption">Field separator</div>
@@ -517,7 +517,7 @@
 					</td>
 				<td align="left" class="tdFormInput">
 					<label for="csvFieldNamesOnTop">The first line of the file contains field names</label>
-					<br /><i>field names must <b>exactly</b> match those in the database.</i>
+					<br><i>Field names must <b>exactly</b> match those in the database.</i>
 					</td>
 				</tr>
 			<tr>
@@ -526,6 +526,7 @@
 					</td>
 				<td align="left" class="tdFormInput">
 					<label for="csvUpdateIfPKExists">Update table records if their primary key values match those in the CSV file.</label>
+					<br><i>If not checked, records in the CSV file having the same primary key values as those in the table <b>will be ignored</b></i>
 					</td>
 				</tr>
 			<tr>

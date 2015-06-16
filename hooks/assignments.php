@@ -26,7 +26,7 @@
 	*/
 
 	function assignments_init(&$options, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -51,7 +51,7 @@
 
 	function assignments_header($contentType, $memberInfo, &$args){
 		$header='';
-	
+
 		switch($contentType){
 			case 'tableview':
 				$header='';
@@ -102,7 +102,7 @@
 
 	function assignments_footer($contentType, $memberInfo, &$args){
 		$footer='';
-	
+
 		switch($contentType){
 			case 'tableview':
 				$footer='';
@@ -137,8 +137,9 @@
 	 * 
 	 * @param $data
 	 * An associative array where the keys are field names and the values are the field data values to be inserted into the new record.
+	 * Note: if a field is set as read-only or hidden in detail view, it can't be modified through $data. You should use a direct SQL statement instead.
 	 * For this table, the array items are: 
-	 *     $data['ResourceId'], $data['ProjectId'], $data['Commitment'], $data['StartDate'], $data['EndDate']
+	 *     $data['ProjectId'], $data['ProjectDuration'], $data['ResourceId'], $data['Commitment'], $data['StartDate'], $data['EndDate']
 	 * $data array is passed by reference so that modifications to it apply to the insert query.
 	 * 
 	 * @param $memberInfo
@@ -153,7 +154,7 @@
 	*/
 
 	function assignments_before_insert(&$data, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -163,7 +164,7 @@
 	 * @param $data
 	 * An associative array where the keys are field names and the values are the field data values that were inserted into the new record.
 	 * For this table, the array items are: 
-	 *     $data['ResourceId'], $data['ProjectId'], $data['Commitment'], $data['StartDate'], $data['EndDate']
+	 *     $data['ProjectId'], $data['ProjectDuration'], $data['ResourceId'], $data['Commitment'], $data['StartDate'], $data['EndDate']
 	 * Also includes the item $data['selectedID'] which stores the value of the primary key for the new record.
 	 * 
 	 * @param $memberInfo
@@ -179,7 +180,7 @@
 	*/
 
 	function assignments_after_insert($data, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -188,8 +189,9 @@
 	 * 
 	 * @param $data
 	 * An associative array where the keys are field names and the values are the field data values.
+	 * Note: if a field is set as read-only or hidden in detail view, it can't be modified through $data. You should use a direct SQL statement instead.
 	 * For this table, the array items are: 
-	 *     $data['Id'], $data['ResourceId'], $data['ProjectId'], $data['Commitment'], $data['StartDate'], $data['EndDate']
+	 *     $data['Id'], $data['ProjectId'], $data['ProjectDuration'], $data['ResourceId'], $data['Commitment'], $data['StartDate'], $data['EndDate']
 	 * Also includes the item $data['selectedID'] which stores the value of the primary key for the record to be updated.
 	 * $data array is passed by reference so that modifications to it apply to the update query.
 	 * 
@@ -205,7 +207,7 @@
 	*/
 
 	function assignments_before_update(&$data, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -215,7 +217,7 @@
 	 * @param $data
 	 * An associative array where the keys are field names and the values are the field data values.
 	 * For this table, the array items are: 
-	 *     $data['Id'], $data['ResourceId'], $data['ProjectId'], $data['Commitment'], $data['StartDate'], $data['EndDate']
+	 *     $data['Id'], $data['ProjectId'], $data['ProjectDuration'], $data['ResourceId'], $data['Commitment'], $data['StartDate'], $data['EndDate']
 	 * Also includes the item $data['selectedID'] which stores the value of the primary key for the record.
 	 * 
 	 * @param $memberInfo
@@ -230,7 +232,7 @@
 	*/
 
 	function assignments_after_update($data, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -256,7 +258,7 @@
 	*/
 
 	function assignments_before_delete($selectedID, &$skipChecks, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -278,7 +280,7 @@
 	*/
 
 	function assignments_after_delete($selectedID, $memberInfo, &$args){
-	
+
 	}
 
 	/**
@@ -304,7 +306,7 @@
 	*/
 
 	function assignments_dv($selectedID, $memberInfo, &$html, &$args){
-	
+
 	}
 
 	/**
@@ -324,7 +326,26 @@
 	 * A string containing the query to use for fetching the CSV data. If FALSE or empty is returned, the default query is used.
 	*/
 
-	function assignments_csv($query, $memberInfo, $args){
-	
+	function assignments_csv($query, $memberInfo, &$args){
+
 		return $query;
+	}
+	/**
+	 * Called when displaying the table view to retrieve custom record actions
+	 * 
+	 * @return
+	 * A 2D array describing custom record actions. The format of the array is:
+	 *   array(
+	 *      array(
+	 *         'title' => 'Title', // the title/label of the custom action as displayed to users
+	 *         'function' => 'js_function_name', // the name of a javascript function to be executed when user selects this action
+	 *         'class' => 'CSS class(es) to apply to the action title', // optional, refer to Bootstrap documentation for CSS classes
+	 *         'icon' => 'icon name' // optional, refer to Bootstrap glyphicons for supported names
+	 *      ), ...
+	 *   )
+	*/
+
+	function assignments_batch_actions(&$args){
+
+		return array();
 	}

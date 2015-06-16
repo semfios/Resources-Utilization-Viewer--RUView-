@@ -12,7 +12,7 @@
 			$memberID=makeSafe(strtolower($_POST['memberID']));
 		}else{
 			// error in request. redirect to members page.
-			redirect('pageViewMembers.php');
+			redirect('admin/pageViewMembers.php');
 		}
 
 	// validate memberID exists and is not guest and is not admin
@@ -24,7 +24,7 @@
 		$group=sqlValue("select name from membership_groups where groupID='$groupID'");
 		if($groupID==$anonGroupID || $memberID==$anonymousMember || !$groupID || $groupID==$adminGroupID || $memberID==$adminConfig['adminUsername']){
 			// error in request. redirect to members page.
-			redirect('pageViewMembers.php');
+			redirect('admin/pageViewMembers.php');
 		}
 
 	// request to save changes?
@@ -55,11 +55,11 @@
 		sql($query, $eo);
 
 		// redirect to member permissions page
-		redirect("pageEditMemberPermissions.php?saved=1&memberID=".urlencode($memberID));
+		redirect("admin/pageEditMemberPermissions.php?saved=1&memberID=".urlencode($memberID));
 	}elseif($_POST['resetPermissions']!=''){
 		sql("delete from membership_userpermissions where lcase(memberID)='$memberID'", $eo);
 		// redirect to member permissions page
-		redirect("pageEditMemberPermissions.php?reset=1&memberID=".urlencode($memberID));
+		redirect("admin/pageEditMemberPermissions.php?reset=1&memberID=".urlencode($memberID));
 	}elseif($_GET['memberID']!=''){
 		// we have an edit request for a group
 	}
@@ -68,7 +68,7 @@
 
 	// fetch group permissions to fill in the form below in case user has no special permissions
 		$res1=sql("select * from membership_grouppermissions where groupID='$groupID'", $eo);
-		while($row=mysql_fetch_assoc($res1)){
+		while($row=db_fetch_assoc($res1)){
 			$tableName=$row['tableName'];
 			$vIns=$tableName."_insert";
 			$vUpd=$tableName."_edit";
@@ -82,7 +82,7 @@
 
 	// fetch user permissions to fill in the form below, overwriting his group permissions
 		$res2=sql("select * from membership_userpermissions where lcase(memberID)='$memberID'", $eo);
-		while($row=mysql_fetch_assoc($res2)){
+		while($row=db_fetch_assoc($res2)){
 			$tableName=$row['tableName'];
 			$vIns=$tableName."_insert";
 			$vUpd=$tableName."_edit";
@@ -112,15 +112,15 @@
 <input style="display: none;" type="checkbox" id="showToolTips" value="1">
 <form method="post" action="pageEditMemberPermissions.php">
 	<input type="hidden" name="memberID" value="<?php echo $memberID; ?>">
-	<table border="0" cellspacing="0" cellpadding="0" align="center">
+	<div class="table-responsive"><table class="table table-striped">
 		<tr>
-			<td class="tdFormHeader" colspan="5"><h1>Table permissions for user <a href="pageEditMember.php?memberID=<?php echo urlencode($memberID); ?>" title="View member details"><?php echo $memberID; ?></a> of group <a href="pageEditGroup.php?groupID=<?php echo $groupID; ?>" title="View group details and permissions"><?php echo $group; ?></a></h1></td>
+			<td class="tdFormHeader" colspan="5"><div class="page-header"><h1>Table permissions for user <a href="pageEditMember.php?memberID=<?php echo urlencode($memberID); ?>" title="View member details"><?php echo $memberID; ?></a> of group <a href="pageEditGroup.php?groupID=<?php echo $groupID; ?>" title="View group details and permissions"><?php echo $group; ?></a></h1></div></td>
 			</tr>
 <?php
-	if(!mysql_num_rows($res2)){
+	if(!db_num_rows($res2)){
 		?>
 		<tr>
-			<td class="tdFormHeader" colspan="5" align="center"><div class="status">This member doesn't currently have any special permissions. This list shows the permissions of his group.</div></td>
+			<td class="tdFormHeader" colspan="5" align="center"><div class="alert alert-info">This member doesn't currently have any special permissions. This list shows the permissions of his group.</div></td>
 			</tr>
 		<?php
 	}else{
@@ -175,9 +175,20 @@
 				<input type="submit" name="saveChanges" value="Save changes">
 				</td>
 			</tr>
-		</table>
+		</table></div>
 	</form>
 
+	<script>
+		$j(function(){
+			var highlight_selections = function(){
+				$j('input[type=radio]:checked').next().addClass('text-primary');
+				$j('input[type=radio]:not(:checked)').next().removeClass('text-primary');
+			}
+
+			$j('input[type=radio]').change(function(){ highlight_selections(); });
+			highlight_selections();
+		});
+	</script>
 
 <?php
 	include("$currDir/incFooter.php");

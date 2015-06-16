@@ -5,13 +5,13 @@
 	include("$currDir/lib.php");
 
 	// upload paths
-	$p=array
+	$p=array(  
 	);
 
 	if(!count($p)) getLink();
 
 	// default links
-	$dL=array(
+	$dL=array(  
 	);
 
 	// receive user input
@@ -23,6 +23,9 @@
 	if(!in_array($t, array_keys($p)))  getLink();
 	if(!in_array($f, array_keys($p[$t])) || $f=='primary key')  getLink();
 	if(!$i && !$dL[$t][$f]) getLink();
+
+	// user has view access to the requested table?
+	if(!check_record_permission($t, $_GET['i'])) getLink();
 
 	// send default link if no id provided, e.g. new record
 	if(!$i){

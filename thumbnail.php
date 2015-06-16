@@ -5,7 +5,7 @@
 	include("$currDir/lib.php");
 
 	// image paths
-	$p=array(
+	$p=array(   
 	);
 
 	if(!count($p)) exit;

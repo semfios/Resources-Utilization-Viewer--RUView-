@@ -20,29 +20,33 @@
 	// process ownership request
 	if(count($_POST)){
 		ignore_user_abort();
-		foreach($arrTablesNoOwners as $tn=>$tc){
-			$groupID=intval($_POST["ownerGroup_$tn"]);
-			$memberID=makeSafe(strtolower($_POST["ownerMember_$tn"]));
-			$pkf=getPKFieldName($tn);
+		foreach($arrTablesNoOwners as $tn => $tc){
+			$groupID = intval($_POST["ownerGroup_$tn"]);
+			$memberID = makeSafe(strtolower($_POST["ownerMember_$tn"]));
+			$pkf = getPKFieldName($tn);
 
 			if($groupID){
-				$insertBegin="insert into membership_userrecords (tableName, pkValue, groupID, memberID, dateAdded, dateUpdated) values ";
-				$ts=time();
+				$insertBegin = "insert ignore into membership_userrecords (tableName, pkValue, groupID, memberID, dateAdded, dateUpdated) values ";
+				$ts = time();
+				$assigned = 0;
 
-				$res=sql("select `$tn`.`$pkf` from `$tn` left join membership_userrecords on `$tn`.`$pkf`=membership_userrecords.pkValue and membership_userrecords.tableName='$tn' where membership_userrecords.pkValue is null", $eo);
-				while($row=mysql_fetch_row($res)){
-					$insert.="('$tn', '$row[0]', '$groupID', ".($memberID ? "'$memberID'" : "NULL").", $ts, $ts),";
-					if(strlen($insert)>50000){
-						sql($insertBegin.substr($insert, 0, -1), $eo);
-						$insert='';
+				$res = sql("select `$tn`.`$pkf` from `$tn`", $eo);
+				while($row = db_fetch_row($res)){
+					$pkValue = makeSafe($row[0], false);
+					$insert .= "('$tn', '$pkValue', '$groupID', ".($memberID ? "'$memberID'" : "NULL").", $ts, $ts),";
+					if(strlen($insert) > 50000){
+						sql($insertBegin . substr($insert, 0, -1), $eo);
+						$assigned += @db_affected_rows(db_link());
+						$insert = '';
 					}
 				}
-				if($insert!=''){
-					sql($insertBegin.substr($insert, 0, -1), $eo);
-					$insert='';
+				if($insert != ''){
+					sql($insertBegin . substr($insert, 0, -1), $eo);
+					$assigned += @db_affected_rows(db_link());
+					$insert = '';
 				}
 
-				$status.="Assigned ".number_format(mysql_num_rows($res))." records of table '$tn' to group '".sqlValue("select name from membership_groups where groupID='$groupID'")."'".($memberID ? ", member '$memberID'" : "").".<br />";
+				$status.="Assigned " . number_format($assigned)." records of table '$tn' to group '" . sqlValue("select name from membership_groups where groupID='$groupID'") . "'" . ($memberID ? ", member '$memberID'" : "") . ".<br>";
 			}
 		}
 
@@ -61,13 +65,13 @@
 
 ?>
 
-<h1>Assign ownership to data that has no owners</h1>
+<div class="page-header"><h1>Assign ownership to data that has no owners</h1></div>
 
 <?php
 
 	// if all records of all tables have owners, no need to continue
 	if(!is_array($arrTablesNoOwners)){
-		echo "<div class=\"status\">All records in all tables have owners now.<br />Back to <a href=\"pageHome.php\">Admin homepage</a>.<div>";
+		echo "<div class=\"status\">All records in all tables have owners now.<br>Back to <a href=\"pageHome.php\">Admin homepage</a>.<div>";
 		include("$currDir/incFooter.php");
 		exit;
 	}
@@ -80,17 +84,17 @@
 	// compose groups drop-down
 	$htmlGroups="<option value=\"0\">--- Select group ---</option>";
 	$res=sql("select groupID, name from membership_groups order by name", $eo);
-	while($row=mysql_fetch_row($res)){
+	while($row=db_fetch_row($res)){
 		$htmlGroups.="<option value=\"$row[0]\">$row[1]</option>";
 	}
 	$htmlGroups.="</select>";
 ?>
 
-<script language="javaScript">
+<script>
 	var members=new Array();
 	<?php
 		$res=sql("select groupID, lcase(memberID) from membership_users order by groupID, memberID", $eo);
-		while($row=mysql_fetch_row($res)){
+		while($row=db_fetch_row($res)){
 			$members[$row[0]].="'".$row[1]."',";
 		}
 
@@ -125,38 +129,43 @@
 	</script>
 
 <form method="post" action="pageAssignOwners.php">
-	<table border="0" cellspacing="0" cellpadding="0">
-		<tr><td colspan="4" style="width: 700px; padding-bottom: 20px; text-align: left;">
-			Sometimes, you might have tables with data that were entered before implementing
-			this AppGini membership management system, or entered using other applications
-			unaware of AppGini ownership system.
-			This data currently has no owners.
-			This page allows you to assign owner groups and owner members to this data.
-			</td></tr>
-		<tr>
-			<td class="tdHeader"><div class="ColCaption">Table</div></td>
-			<td class="tdHeader"><div class="ColCaption">Records with no owners</div></td>
-			<td class="tdHeader"><div class="ColCaption">New owner group</div></td>
-			<td class="tdHeader"><div class="ColCaption">New owner member*</div></td>
-			</tr>
+	<p>
+		Sometimes, you might have tables with data that were entered before implementing
+		this AppGini membership management system, or entered using other applications
+		unaware of AppGini ownership system.
+		This data currently has no owners.
+		This page allows you to assign owner groups and owner members to this data.
+	</p>
+
+	<div class="table-responsive"><table class="table">
+		<thead><tr>
+			<th><div class="ColCaption">Table</div></th>
+			<th><div class="ColCaption">Records with no owners</div></th>
+			<th><div class="ColCaption">New owner group</div></th>
+			<th><div class="ColCaption">New owner member*</div></th>
+		</tr></thead>
+
+		<tbody>
 <?php
 	foreach($arrTablesNoOwners as $tn=>$countNoOwners){
 		?>
 		<tr>
-			<td class="tdCaptionCell"><?php echo $arrTables[$tn]; ?></td>
-			<td class="tdCell" align="right"><?php echo number_format($countNoOwners); ?>&nbsp;</td>
-			<td class="tdCell"><select onchange="populateMembers('ownerMember_<?php echo $tn; ?>', 'ownerGroup_<?php echo $tn; ?>');" name="ownerGroup_<?php echo $tn; ?>"><?php echo $htmlGroups; ?></td>
-			<td class="tdCell"><select style="width: 120px;" name="ownerMember_<?php echo $tn; ?>"></select></td>
+			<td><?php echo $arrTables[$tn]; ?></td>
+			<td align="right"><?php echo number_format($countNoOwners); ?>&nbsp;</td>
+			<td><select onchange="populateMembers('ownerMember_<?php echo $tn; ?>', 'ownerGroup_<?php echo $tn; ?>');" name="ownerGroup_<?php echo $tn; ?>"><?php echo $htmlGroups; ?></td>
+			<td><select style="width: 120px;" name="ownerMember_<?php echo $tn; ?>"></select></td>
 			</tr>
 		<?php
 	}
 ?>
-		<tr><td colspan="4" class="tdCaptionCell" align="right">
+		<tr><td colspan="4" class="text-center">
 			<input type="button" value="Cancel" onclick="window.location='pageHome.php';">
-			<input type="submit" name="assignOwners" value="Assign new owners" onclick="this.value='Please wait ...'; this.onclick='return FALSE;'; this.disabled=true; return true;">
+			<input type="button" name="assignOwners" value="Assign new owners" onclick="this.value='Please wait ...'; this.onclick='return FALSE;'; this.disabled=true; document.getElementsByTagName('form')[0].submit();">
 			</td></tr>
-		<tr><td colspan="4" class="tdCell">* If you assign no owner member here, you can still use the <a href="pageTransferOwnership.php">Batch Transfer Wizard</a> later to do so.</td></tr>
-		</table>
+		</tbody>
+		</table></div>
+
+		<p>* If you assign no owner member here, you can still use the <a href="pageTransferOwnership.php">Batch Transfer Wizard</a> later to do so.</p>
 	</form>
 
 <?php

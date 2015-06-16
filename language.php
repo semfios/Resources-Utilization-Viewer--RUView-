@@ -22,7 +22,6 @@
 
 
 	// datalist.php
-	$Translation['powered by'] = "Powered by";
 	$Translation['quick search'] = "Quick Search";
 	$Translation['records x to y of z'] = "Records <FirstRecord> to <LastRecord> of <RecordCount>";
 	$Translation['filters'] = "Filters";
@@ -91,7 +90,6 @@
 	$Translation['Delete'] = 'Delete';
 	$Translation['Cancel'] = 'Cancel';
 	$Translation['Print Preview'] = 'Print Preview';
-	$Translation['Print'] = 'Print Preview';
 	$Translation['Save Changes'] = 'Save Changes';
 	$Translation['CSV'] = 'Save CSV';
 	$Translation['Reset Filters'] = 'Show All';
@@ -106,7 +104,7 @@
 	$Translation['error:'] = "Error:";
 	$Translation['sql error:'] = "SQL error:";
 	$Translation['query:'] = "Query:";
-	$Translation['< back'] = "&lt; Back";
+	$Translation['< back'] = "Back";
 	$Translation["if you haven't set up"] = "If you haven't set up the database yet, you can do so by clicking <a href='setup.php'>here</a>.";
 	$Translation['file too large']="Error: The file you uploaded exceeds the maximum allowed size of <MaxSize> KB";
 	$Translation['invalid file type']="Error: This file type is not allowed. Only <FileTypes> files can be uploaded";
@@ -193,7 +191,7 @@
 	$Translation['password reset details']="Enter your username or email address below. We'll then send a special link to your email. After you click on that link, you'll be asked to enter a new password.";
 	$Translation['password reset subject']="Password reset instructions";
 	$Translation['password reset message']="Dear member, \n If you have requested to reset/change your password, please click on this link: \n <ResetLink> \n\n If you didn't request a password reset/change, please ignore this message. \n\n Regards.";
-	$Translation['password reset ready']="An email with password reset instructions has been sent to your registered email address. Please keep this browser window open and follow the instructions in the email message.<br /><br />If you don't receive this email within 5 minutes, try resetting your password again, and make sure you enter a correct username or email address.";
+	$Translation['password reset ready']="An email with password reset instructions has been sent to your registered email address. Please follow the instructions in that email message.<br /><br />If you don't receive this email within 5 minutes, try resetting your password again, and make sure you enter a correct username or email address.";
 	$Translation['password reset invalid']="Invalid username or password. <a href=membership_passwordReset.php>Try again</a>, or go <a href=index.php>back to homepage</a>.";
 	$Translation['password change']="Password Change Page";
 	$Translation['new password']="New password";
@@ -201,7 +199,7 @@
 
     $Translation['Loading ...']='Loading ...';
     $Translation['No records found']='No records found';
-    $Translation['You can add children records after saving the main record first']='You can add children records after saving the main record first';
+    $Translation['You can add children records after saving the main record first']='You can add child records after saving the main record first';
 
     $Translation['ascending'] = 'Ascending';
     $Translation['descending'] = 'Descending';
@@ -233,3 +231,60 @@
 	
 	/* Added in AppGini 4.90 */
 	$Translation['Records to display'] = 'Records to display';
+	
+	/* Added in AppGini 5.10 */
+	$Translation['Setup Data'] = 'Setup Data';
+	$Translation['Database Information'] = 'Database Information';
+	$Translation['Admin Information'] = 'Admin Information';
+	$Translation['setup intro 1'] = 'There doesn\'t seem to be a configuration file. This is necessary for the application to work.<br><br>This setup page will help you create that file. But in some server configurations this might not work. In that case you might need to adjust the folder permissions, or create the config file manually.';
+	$Translation['setup intro 2'] = 'Welcome to your new AppGini application! Before getting started, we need some information about your database. You will need to know the following before proceeding:<ol><li>Database server (host)</li><li>Database name</li><li>Database username</li><li>Database password</li></ol>The above items were probably supplied to you by your web hosting provider. If you do not have this information, then you will need to contact them or refer to their service documentation before you can continue here. If you\'re ready, let\'s start!';
+	$Translation['setup finished'] = '<b>Success!</b><br><br>Your AppGini application has been installed. Here are some suggestions to begin using it:';
+	$Translation['setup next 1'] = 'Start using your application to add data, or work with existing data, if any.';
+	$Translation['setup next 2'] = 'Import existing data into your application from a CSV file.';
+	$Translation['setup next 3'] = 'Go to the admin homepage where you can change many other application settings.';
+	$Translation['db_name help'] = 'The name of the database you want to run your AppGini application in.';
+	$Translation['db_server help'] = '<i>localhost</i> works on most servers. If not, you should be able to get this info from your web hosting provider.';
+	$Translation['db_username help'] = 'Your MySQL username';
+	$Translation['db_password help'] = 'Your MySQL password';
+	$Translation['username help'] = 'Specify the admin username you\'d like to use to access the admin area. Must be four characters or more.';
+	$Translation['password help'] = 'Specify a strong password to access the admin area.';
+	$Translation['email help'] = 'Enter the email address where you want admin notifications to be sent.';
+	$Translation['Continue'] = 'Continue ...';
+	$Translation['Lets go'] = 'Let\'s go!';
+	$Translation['Submit'] = 'Submit';
+	$Translation['Hide'] = 'Hide help';
+	$Translation['Database info is correct'] = '&#10003; Database info is correct!';
+	$Translation['Database connection error'] = '&#10007; Database connection error!';
+	$Translation['The following errors occured'] = 'The following errors occured';
+	$Translation['failed to create config instructions'] = 'This is most probably due to folder permissions that are set to prevent creating files by your web server. Don\'t worry! You can still create the config file manually.<br><br>Just paste the following code into a text editor and save the file as "config.php", then upload it using FTP or any other method to the folder %s on your server.';
+	$Translation['Only show records having filterer'] = 'Only show records where %s is %s';
+	
+	/* Added in AppGini 5.20 */
+	$Translation['You don\'t have enough permissions to delete this record'] = 'You don\'t have enough permissions to delete this record';
+	$Translation['Couldn\'t delete this record'] = 'Couldn\'t delete this record';
+	$Translation['The record has been deleted successfully'] = 'The record has been deleted successfully';
+	$Translation['Couldn\'t save changes to the record'] = 'Couldn\'t save changes to the record';
+	$Translation['Couldn\'t save the new record'] = 'Couldn\'t save the new record';
+	
+	/* Added in AppGini 5.30 */
+	$Translation['More'] = 'More';
+	$Translation['Confirm deleting multiple records'] = 'Confirm deleting multiple records';
+	$Translation['<n> records will be deleted. Are you sure you want to do this?'] = '<n> records will be deleted. Are you sure you want to do this?';
+	$Translation['Yes, delete them!'] = 'Yes, delete them!';
+	$Translation['No, keep them.'] = 'No, keep them.';
+	$Translation['Deleting record <i> of <n>'] = 'Deleting record <i> of <n>';
+	$Translation['Delete progress'] = 'Delete progress';
+	$Translation['Show/hide details'] = 'Show/hide details';
+	$Translation['Connection error'] = 'Connection error';
+	$Translation['Add more actions'] = 'Add more actions';
+	$Translation['Update progress'] = 'Update progress';
+	$Translation['Change owner'] = 'Change owner';
+	$Translation['Updating record <i> of <n>'] = 'Updating record <i> of <n>';
+	$Translation['Change owner of <n> selected records to'] = 'Change owner of <n> selected records to';
+
+	/* Added in AppGini 5.40 */
+	$Translation['username invalid'] = 'Username <MemberID> already exists or is invalid. Make sure you provide a username containing 4 to 20 valid characters.';
+	$Translation['permalink'] = 'Permalink';
+	$Translation['invalid provider'] = 'Invalid provider!';
+	$Translation['invalid url'] = 'Invalid URL!';
+	$Translation['cant retrieve coordinates from url'] = 'Can\'t retrieve coordinates from URL!';

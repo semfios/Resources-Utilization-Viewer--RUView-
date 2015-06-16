@@ -6,7 +6,7 @@
 	// check configured sender
 	if(!isEmail($adminConfig['senderEmail'])){
 		?>
-		<div class="status">
+		<div class="alert alert-danger">
 			You can not send emails currently. 
 			The configured sender email address is not valid.
 			Please <a href="pageSettings.php">correct it first</a> then try again.
@@ -25,7 +25,7 @@
 		$recipient=($sendToAll ? "All groups" : ($isGroup ? sqlValue("select name from membership_groups where groupID='$groupID'") : sqlValue("select memberID from membership_users where lcase(memberID)='$memberID'")));
 		if(!$recipient){
 			?>
-			<div class="status">
+			<div class="alert alert-danger">
 				Couldn't find recipient. Please make sure you provide a valid recipient.
 				</div>
 			<?php
@@ -52,7 +52,7 @@
 		$recipient=($sendToAll ? "All groups" : ($isGroup ? sqlValue("select name from membership_groups where groupID='$groupID'") : sqlValue("select lcase(memberID) from membership_users where lcase(memberID)='$memberID'")));
 		if(!$recipient){
 			?>
-			<div class="status">
+			<div class="alert alert-danger">
 				Couldn't find recipient. Please make sure you provide a valid recipient.
 				</div>
 			<?php
@@ -67,14 +67,14 @@
 		}else{
 			$res=sql("select email from membership_users where lcase(memberID)='$memberID'", $eo);
 		}
-		while($row=mysql_fetch_row($res)){
+		while($row=db_fetch_row($res)){
 			$to[]=$row[0];
 		}
 
 		// check that there is at least 1 recipient
 		if(count($to)<1){
 			?>
-			<div class="status">
+			<div class="alert alert-danger">
 				Couldn't find any recipients. Please make sure you provide a valid recipient.
 				</div>
 			<?php
@@ -86,7 +86,7 @@
 		$currDir=dirname(__FILE__);
 		if(!$fp=fopen("$currDir/$queueFile.php", "w")){
 			?>
-			<div class="status">
+			<div class="alert alert-danger">
 				Couldn't save mail queue. Please make sure the directory '<?php echo $currDir; ?>' is writeable (chmod 755 or chmod 777).
 				</div>
 			<?php
@@ -103,31 +103,31 @@
 		}
 
 		// redirect to mail queue processor
-		redirect("pageSender.php?queue=$queueFile");
+		redirect("admin/pageSender.php?queue=$queueFile");
 		include("$currDir/incFooter.php");
 	}
 
 
 ?>
 
-<h1>Send mail message to a member/group</h1>
+<div class="page-header"><h1>Send mail message to a member/group</h1></div>
 
 <?php if($sendToAll){ ?>
-	<div class="status"><u>Attention!</u><br />You are sending an email to all members. This could take a lot of time and affect your server performance. If you have a huge number of members, we don't recommend sending an email to all of them at once.</div>
+	<div class="alert alert-warning"><u>Attention!</u><br>You are sending an email to all members. This could take a lot of time and affect your server performance. If you have a huge number of members, we don't recommend sending an email to all of them at once.</div>
 <?php } ?>
 
 <form method="post" action="pageMail.php">
 	<input type="hidden" name="memberID" value="<?php echo $memberID; ?>">
 	<input type="hidden" name="groupID" value="<?php echo $groupID; ?>">
 	<input type="hidden" name="sendToAll" value="<?php echo $sendToAll; ?>">
-	<table border="0" cellspacing="0" cellpadding="0">
+	<table class="table table-striped">
 		<tr>
 			<td align="right" class="tdFormCaption" valign="top">
 				<div class="formFieldCaption">From</div>
 				</td>
 			<td align="left" class="tdFormInput">
 				<?php echo $adminConfig['senderName']." &lt;".$adminConfig['senderEmail']."&gt;"; ?>
-				<br /><a href="pageSettings.php">Change this setting</a>
+				<br><a href="pageSettings.php">Change this setting</a>
 				</td>
 			</tr>
 

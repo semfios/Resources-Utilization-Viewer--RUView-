@@ -8,9 +8,9 @@
 	if(!sqlValue("select count(1) from membership_groups where allowSignup=1")){
 		$noSignup=TRUE;
 		?>
-		<div class="status">
+		<div class="alert alert-info">
 			<i>Attention!</i>
-			<br /><a href="../membership_signup.php" target="_blank">Visitor sign up</a> 
+			<br><a href="../membership_signup.php" target="_blank">Visitor sign up</a> 
 			is disabled because there are no groups where visitors can sign up currently.
 			To enable visitor sign-up, set at least one group to allow visitor sign-up.
 			</div>
@@ -28,7 +28,7 @@
 
 		if($countAll>$countOwned){
 			?>
-			<div class="status">
+			<div class="alert alert-info">
 				You have data in one or more tables that doesn't have an owner.
 				To assign an owner group for this data, <a href="pageAssignOwners.php">click here</a>.
 				</div>
@@ -38,63 +38,98 @@
 	}
 ?>
 
-<table align="center" width="950" cellspacing="8" cellpadding="0" border="0">
-	<tr><td colspan="3" align="center">
-		<h1>Membership Management Homepage</h1>
-		</td></tr>
-	<tr><td valign="top" align="left">
+<div class="page-header"><h1>Membership Management Homepage</h1></div>
+
+<?php if(!$adminConfig['hide_twitter_feed']){ ?>
+	<div class="row" id="outer-row"><div class="col-md-8">
+<?php } ?>
+
+<div class="row" id="inner-row">
 
 <!-- ################# Newest Updates ######################## -->
-	<table cellspacing="0" width="100%">
-	<tr><td colspan="2" class="tdHeader">Newest Updates <a href="pageViewRecords.php?sort=dateUpdated&sortDir=desc"><img border="0" src="images/link_icon.gif" title="View all new updates"></a></td></tr>
+<div class="col-md-6">
+<div class="panel panel-info">
+	<div class="panel-heading">
+		<h3 class="panel-title">Newest Updates <a class="btn btn-default btn-sm" href="pageViewRecords.php?sort=dateUpdated&sortDir=desc"><i class="glyphicon glyphicon-chevron-right"></i></a></h3>
+	</div>
+	<div class="panel-body">
+	<table class="table table-striped">
 	<?php
 		$res=sql("select tableName, pkValue, dateUpdated, recID from membership_userrecords order by dateUpdated desc limit 5", $eo);
-		while($row=mysql_fetch_row($res)){
+		while($row=db_fetch_row($res)){
 			?>
 			<tr>
-				<td class="tdCaptionCell" align="right"><?php echo @date($adminConfig['PHPDateTimeFormat'], $row[2]); ?></td>
+				<td class="tdCaptionCell"><?php echo @date($adminConfig['PHPDateTimeFormat'], $row[2]); ?></td>
 				<td class="tdCell" align="left"><a href="pageEditOwnership.php?recID=<?php echo $row[3]; ?>"><img src="images/data_icon.gif" border="0" alt="View record details" title="View record details"></a> <?php echo substr(getCSVData($row[0], $row[1]), 0, 15); ?> ...</td>
 				</tr>
 			<?php
 		}
 	?>
 	</table>
+	</div>
+</div>
+</div>
 <!-- ####################################################### -->
 
-	</td><td valign="top" align="right">
 
 <!-- ################# Newest Entries ######################## -->
-	<table cellspacing="0" width="100%">
-	<tr><td colspan="2" class="tdHeader">Newest Entries <a href="pageViewRecords.php?sort=dateAdded&sortDir=desc"><img border="0" src="images/link_icon.gif" title="View all new entries"></a></td></tr>
+<div class="col-md-6">
+<div class="panel panel-info">
+	<div class="panel-heading">
+		<h3 class="panel-title">Newest Entries <a class="btn btn-default btn-sm" href="pageViewRecords.php?sort=dateAdded&sortDir=desc"><i class="glyphicon glyphicon-chevron-right"></i></a></h3>
+	</div>
+	<div class="panel-body">
+	<table class="table table-striped">
 	<?php
 		$res=sql("select tableName, pkValue, dateAdded, recID from membership_userrecords order by dateAdded desc limit 5", $eo);
-		while($row=mysql_fetch_row($res)){
+		while($row=db_fetch_row($res)){
 			?>
 			<tr>
-				<td class="tdCaptionCell" align="right"><?php echo @date($adminConfig['PHPDateTimeFormat'], $row[2]); ?></td>
+				<td class="tdCaptionCell"><?php echo @date($adminConfig['PHPDateTimeFormat'], $row[2]); ?></td>
 				<td class="tdCell" align="left"><a href="pageEditOwnership.php?recID=<?php echo $row[3]; ?>"><img src="images/data_icon.gif" border="0" alt="View record details" title="View record details"></a> <?php echo substr(getCSVData($row[0], $row[1]), 0, 15); ?> ...</td>
 				</tr>
 			<?php
 		}
 	?>
 	</table>
+	</div>
+</div>
+</div>
 <!-- ####################################################### -->
 
-	</td><td valign="top" align="right" rowspan="2">
+
 <!-- ################# Add-ons available ######################## -->
 	<?php
-		$xml = @simplexml_load_file('http://bigprof.com/appgini/taxonomy/term/6/0/feed');
+		// do we have a cache file that was recently updated?
+		$addOnsCache = "$currDir/add-ons.cache";
+		$addOnXML = '';
+		if(is_file($addOnsCache) && filemtime($addOnsCache) >= (time() - 86400 * 2)){
+			// read feed from cache
+			$addOnXML = @file_get_contents($addOnsCache);
+		}else{
+			// read live feed and store to cache
+			$addOnXML = @file_get_contents('http://bigprof.com/appgini/taxonomy/term/6/0/feed');
+			@file_put_contents($addOnsCache, $addOnXML);
+			clearstatcache();
+		}
+
+		$xml = @simplexml_load_string($addOnXML);
 		if(count($xml->channel->item)){
 			?>
-			<table cellspacing="0" width="200">
-			<tr><td colspan="2" class="tdHeader">Available add-ons</td></tr>
+		<div class="col-md-6">
+		<div class="panel panel-info">
+			<div class="panel-heading">
+				<h3 class="panel-title">Available add-ons</h3>
+			</div>
+			<div class="panel-body">
+			<table class="table table-striped">
 			<?php
 				$addOnId = 0;
 				foreach($xml->channel->item as $indx => $data){
 					$addOnId++; if($addOnId > 10) break;
 					?>
 					<tr>
-						<td class="tdCell" align="left">
+						<td>
 							<?php echo (strtotime($data->pubDate) > (@time() - 60 * 24 * 60 * 60) ? '<img src="../new.png" align="top" /> ' : ''); ?><a href="#" onclick="return showDialog('add-on-<?php echo $addOnId; ?>');"><?php echo $data->title; ?></a><br/>
 							<div class="dialog-box hidden-block" id="add-on-<?php echo $addOnId; ?>">
 								<h3><a href="<?php echo $data->link; ?>" target="_blank"><?php echo $data->title; ?></a></h3>
@@ -109,94 +144,123 @@
 					<?php
 				}
 			?>
-				<tr><td class="tdCell" align="center"><a href="http://bigprof.com/appgini/add-ons" target="_blank">View all add-ons</a></td></tr>
+				<tr><td class="text-center"><a href="http://bigprof.com/appgini/add-ons" target="_blank">View all add-ons</a></td></tr>
 			</table>
+			</div>
+		</div>
+		</div>
 			<?php
 		}
 	?>
 <!-- ####################################################### -->
 
-	</td></tr>
-	<tr><td valign="top" colspan="2"><table cellspacing="8" width="100%"><tr><td align="left" valign="top">
 
 <!-- ################# Top Members ######################## -->
-	<table cellspacing="0" width="100%">
-	<tr><td colspan="2" class="tdHeader">Top Members</td></tr>
+<div class="col-md-6">
+<div class="panel panel-info">
+	<div class="panel-heading">
+		<h3 class="panel-title">Top Members</h3>
+	</div>
+	<div class="panel-body">
+	<table class="table table-striped">
 	<?php
 		$res=sql("select lcase(memberID), count(1) from membership_userrecords group by memberID order by 2 desc limit 5", $eo);
-		while($row=mysql_fetch_row($res)){
+		while($row=db_fetch_row($res)){
 			?>
 			<tr>
 				<td class="tdCaptionCell" align="left"><a href="pageEditMember.php?memberID=<?php echo urlencode($row[0]); ?>"><img src="images/edit_icon.gif" border="0" alt="Edit member details" title="Edit member details"></a> <?php echo $row[0]; ?></td>
-				<td class="tdCell" align="right"><?php echo $row[1]; ?> records <a href="pageViewRecords.php?memberID=<?php echo urlencode($row[0]); ?>"><img src="images/data_icon.gif" border="0" alt="View member's data records" title="View member's data records"></a></td>
+				<td class="tdCell"><a href="pageViewRecords.php?memberID=<?php echo urlencode($row[0]); ?>"><img src="images/data_icon.gif" border="0" alt="View member's data records" title="View member's data records"></a> <?php echo $row[1]; ?> records</td>
 				</tr>
 			<?php
 		}
 	?>
 	</table>
+	</div>
+</div>
+</div>
 <!-- ####################################################### -->
 
-	</td><td valign="top" align="center">
 
 <!-- ################# Members Stats ######################## -->
-	<table cellspacing="0" width="100%">
-	<tr><td colspan="2" class="tdHeader">Members Stats</td></tr>
+<div class="col-md-6">
+<div class="panel panel-info">
+	<div class="panel-heading">
+		<h3 class="panel-title">Members Stats</h3>
+	</div>
+	<div class="panel-body">
+	<table class="table table-striped">
 		<tr>
-			<td class="tdCaptionCell" align="right">Total groups</td>
-			<td class="tdCell" align="right"><?php echo sqlValue("select count(1) from membership_groups"); ?> <a href="pageViewGroups.php"><img src="images/view_icon.gif" border="0" alt="View groups" title="View groups"></a></td>
+			<td class="tdCaptionCell">Total groups</td>
+			<td class="tdCell"><a href="pageViewGroups.php"><img src="images/view_icon.gif" border="0" alt="View groups" title="View groups"></a> <?php echo sqlValue("select count(1) from membership_groups"); ?></td>
 			</tr>
 		<tr>
-			<td class="tdCaptionCell" align="right">Active members</td>
-			<td class="tdCell" align="right"><?php echo sqlValue("select count(1) from membership_users where isApproved=1 and isBanned=0"); ?> <a href="pageViewMembers.php?status=2"><img src="images/view_icon.gif" border="0" alt="View active members" title="View active members"></a></td>
+			<td class="tdCaptionCell">Active members</td>
+			<td class="tdCell"><a href="pageViewMembers.php?status=2"><img src="images/view_icon.gif" border="0" alt="View active members" title="View active members"></a> <?php echo sqlValue("select count(1) from membership_users where isApproved=1 and isBanned=0"); ?></td>
 			</tr>
 		<tr>
 			<?php
-				$awaiting=sqlValue("select count(1) from membership_users where isApproved=0");
+				$awaiting = intval(sqlValue("select count(1) from membership_users where isApproved=0"));
 			?>
-			<td class="tdCaptionCell" <?php echo ($awaiting ? "style=\"color: red;\"" : ""); ?> align="right">Members awaiting approval</td>
-			<td class="tdCell" align="right"><?php echo $awaiting; ?> <a href="pageViewMembers.php?status=1"><img src="images/view_icon.gif" border="0" alt="View members awaiting approval" title="View members awaiting approval"></a></td>
+			<td class="tdCaptionCell" <?php echo ($awaiting ? "style=\"color: red;\"" : ""); ?>>Members awaiting approval</td>
+			<td class="tdCell"><a href="pageViewMembers.php?status=1"><img src="images/view_icon.gif" border="0" alt="View members awaiting approval" title="View members awaiting approval"></a> <?php echo $awaiting; ?></td>
 			</tr>
 		<tr>
-			<td class="tdCaptionCell" align="right">Banned members</td>
-			<td class="tdCell" align="right"><?php echo sqlValue("select count(1) from membership_users where isApproved=1 and isBanned=1"); ?> <a href="pageViewMembers.php?status=3"><img src="images/view_icon.gif" border="0" alt="View banned members" title="View banned members"></a></td>
+			<td class="tdCaptionCell">Banned members</td>
+			<td class="tdCell"><a href="pageViewMembers.php?status=3"><img src="images/view_icon.gif" border="0" alt="View banned members" title="View banned members"></a> <?php echo sqlValue("select count(1) from membership_users where isApproved=1 and isBanned=1"); ?></td>
 			</tr>
 		<tr>
-			<td class="tdCaptionCell" align="right">Total members</td>
-			<td class="tdCell" align="right"><?php echo sqlValue("select count(1) from membership_users"); ?> <a href="pageViewMembers.php"><img src="images/view_icon.gif" border="0" alt="View all members" title="View all members"></a></td>
+			<td class="tdCaptionCell">Total members</td>
+			<td class="tdCell"><a href="pageViewMembers.php"><img src="images/view_icon.gif" border="0" alt="View all members" title="View all members"></a> <?php echo sqlValue("select count(1) from membership_users"); ?></td>
 			</tr>
 		</table>
+	</div>
+</div>
+</div>
 <!-- ####################################################### -->
 
-	</td><td valign="top" align="right">
+</div> <!-- /div.row#inner-row -->
 
-<!-- ################# Quick links ######################## -->
-	<table cellspacing="0" width="100%">
-		<tr><td colspan="2" class="tdHeader">Quick Links</td></tr>
-		<tr>
-			<td class="tdCaptionCell" align="right">Batch transfer wizard</td>
-			<td class="tdCell" align="right"><a href="pageTransferOwnership.php"><img src="images/link_icon.gif" border="0" alt="Click here to open" title="Click here to open"></a></td>
-			</tr>
-		<tr>
-			<td class="tdCaptionCell" align="right">Admin settings</td>
-			<td class="tdCell" align="right"><a href="pageSettings.php"><img src="images/link_icon.gif" border="0" alt="Click here to open" title="Click here to open"></a></td>
-			</tr>
-		<tr>
-			<td class="tdCaptionCell" align="right">Send a message to all groups</td>
-			<td class="tdCell" align="right"><a href="pageMail.php?sendToAll=1"><img src="images/link_icon.gif" border="0" alt="Click here to open" title="Click here to open"></a></td>
-			</tr>
-		<tr>
-			<td class="tdCaptionCell" align="right">Edit anonymous permissions</td>
-			<td class="tdCell" align="right"><a href="pageEditGroup.php?groupID=<?php echo sqlValue("select groupID from membership_groups where name='".$adminConfig['anonymousGroup']."'"); ?>"><img src="images/link_icon.gif" border="0" alt="Click here to open" title="Click here to open"></a></td>
-			</tr>
-		<tr>
-			<td class="tdCaptionCell" align="right">Import CSV data</td>
-			<td class="tdCell" align="right"><a href="pageUploadCSV.php"><img src="images/link_icon.gif" border="0" alt="Click here to open" title="Click here to open"></a></td>
-			</tr>
-		</table>
-	</td></tr></table>
-<!-- ####################################################### -->
+<?php if(!$adminConfig['hide_twitter_feed']){ ?>
+		</div> <!-- /div.col-md-8 -->
 
-	</td></tr></table>
+		<div class="col-md-4" id="twitter-feed">
+			<h3>
+				Tweets By BigProf Software
+				<span class="pull-right">
+					<a class="twitter-follow-button" href="https://twitter.com/bigprof" data-show-count="false" data-lang="en">Follow @bigprof</a>
+					<script type="text/javascript">
+						window.twttr = (function (d, s, id) {
+							var t, js, fjs = d.getElementsByTagName(s)[0];
+							if (d.getElementById(id)) return;
+							js = d.createElement(s); js.id = id;
+							js.src= "https://platform.twitter.com/widgets.js";
+							fjs.parentNode.insertBefore(js, fjs);
+							return window.twttr || (t = { _e: [], ready: function (f) { t._e.push(f) } });
+						}(document, "script", "twitter-wjs"));
+					</script>
+				</span>
+			</h3><hr>
+			<div class="text-center">
+				<a class="twitter-timeline" height="400" href="https://twitter.com/bigprof" data-widget-id="552758720300843008" data-chrome="nofooter noheader">Loading @bigprof feed ...</a>
+				<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+			</div>
+			<div class="text-right hidden" id="remove-feed-link"><a href="pageSettings.php#hide_twitter_feed"><i class="glyphicon glyphicon-remove"></i> Remove this feed</a></div>
+			<script>
+				$j(function(){
+					show_remove_feed_link = function(){
+						if(!$j('.twitter-timeline-rendered').length){
+							setTimeout(function(){ show_remove_feed_link(); }, 1000);
+						}else{
+							$j('#remove-feed-link').removeClass('hidden');
+						}
+					};
+					show_remove_feed_link();
+				});
+			</script>
+		</div>
+	</div> <!-- /div.row#outer-row -->
+<?php } ?>
+
 
 <?php
 	include("$currDir/incFooter.php");

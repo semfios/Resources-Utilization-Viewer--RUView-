@@ -5,28 +5,29 @@
 	// get memberID of anonymous member
 	$anonMemberID=strtolower($adminConfig['anonymousMember']);
 
+	$memberID = '';
 	// request to save changes?
-	if($_POST['saveChanges']!=''){
+	if($_POST['saveChanges'] != ''){
 		// validate data
-		$oldMemberID=makeSafe(strtolower($_POST['oldMemberID']));
-		$memberID=makeSafe(strtolower(trim($_POST['memberID'])));
-		$password=makeSafe(trim($_POST['password']));
-		$email=makeSafe($_POST['email']);
-		$groupID=intval($_POST['groupID']);
-		$isApproved=($_POST['isApproved']==1 ? 1 : 0);
-		$isBanned=($_POST['isBanned']==1 ? 1 : 0);
-		$custom1=makeSafe($_POST['custom1']);
-		$custom2=makeSafe($_POST['custom2']);
-		$custom3=makeSafe($_POST['custom3']);
-		$custom4=makeSafe($_POST['custom4']);
-		$comments=makeSafe($_POST['comments']);
+		$oldMemberID = makeSafe(strtolower($_POST['oldMemberID']));
+		$password = makeSafe($_POST['password']);
+		$email = isEmail($_POST['email']);
+		$groupID = intval($_POST['groupID']);
+		$isApproved = ($_POST['isApproved'] == 1 ? 1 : 0);
+		$isBanned = ($_POST['isBanned'] == 1 ? 1 : 0);
+		$custom1 = makeSafe($_POST['custom1']);
+		$custom2 = makeSafe($_POST['custom2']);
+		$custom3 = makeSafe($_POST['custom3']);
+		$custom4 = makeSafe($_POST['custom4']);
+		$comments = makeSafe($_POST['comments']);
 		###############################
 
 		// new member or old?
-		if($oldMemberID==''){ // new member
+		if(!$oldMemberID){ // new member
 			// make sure member name is unique
-			if(sqlValue("select count(1) from membership_users where lcase(memberID)='$memberID'")){
-				echo "<div class=\"error\">Error: Username already exists. You must choose a unique username.</div>";
+			$memberID = is_allowed_username($_POST['memberID']);
+			if(!$memberID){
+				echo "<div class=\"alert alert-danger\">Error: Username already exists or is invalid. Make sure you provide a username containing 4 to 20 valid characters.</div>";
 				include("$currDir/incFooter.php");
 			}
 
@@ -39,9 +40,12 @@
 
 		}else{ // old member
 
-			// make sure member name is unique
-			if($oldMemberID!=$memberID && sqlValue("select count(1) from membership_users where lcase(memberID)='$memberID'")){
-				echo "<div class=\"error\">Error: Username already exists. You must choose a unique username.</div>";
+			// make sure new member username, if applicable, is valid
+			$memberID = makeSafe(strtolower($_POST['memberID']));
+			if($oldMemberID != $memberID) $memberID = is_allowed_username($_POST['memberID']);
+
+			if(!$memberID){
+				echo "<div class=\"alert alert-danger\">Error: Username already exists or is invalid. Make sure you provide a username containing 4 to 20 valid characters.</div>";
 				include("$currDir/incFooter.php");
 			}
 
@@ -72,14 +76,16 @@
 		}
 
 		// redirect to member editing page
-		redirect("pageEditMember.php?memberID=$memberID");
+		redirect("admin/pageEditMember.php?memberID=$memberID");
 
 	}elseif($_GET['memberID']!=''){
 		// we have an edit request for a member
 		$memberID=makeSafe(strtolower($_GET['memberID']));
 	}elseif($_GET['groupID']!=''){
+		// show the form for adding a new member, and pre-select the provided group
 		$groupID=intval($_GET['groupID']);
-		$addend=" to '".sqlValue("select name from membership_groups where groupID='$groupID'")."'";
+		$group_name = sqlValue("select name from membership_groups where groupID='$groupID'");
+		if($group_name) $addend = " to '{$group_name}'";
 	}
 
 	include("$currDir/incHeader.php");
@@ -87,7 +93,7 @@
 	if($memberID!=''){
 		// fetch group data to fill in the form below
 		$res=sql("select * from membership_users where lcase(memberID)='$memberID'", $eo);
-		if($row=mysql_fetch_assoc($res)){
+		if($row=db_fetch_assoc($res)){
 			// get member data
 			$email=$row['email'];
 			$groupID=$row['groupID'];
@@ -100,31 +106,31 @@
 			$comments=htmlspecialchars($row['comments']);
 		}else{
 			// no such member exists
-			echo "<div class=\"error\">Error: Member not found!</div>";
+			echo "<div class=\"alert alert-danger\">Error: Member not found!</div>";
 			$memberID='';
 		}
 	}
 
 	if($memberID!='' && $memberID!=$anonMemberID && $groupID!=sqlValue("select groupID from membership_groups where name='Admins'")){
 		if(sqlValue("select count(1) from membership_userpermissions where memberID='$memberID'")>0){
-			$userPermissionsNote='<br /><i>This user has special permissions that override his group permissions.</i><br />';
+			$userPermissionsNote='<br><i>This user has special permissions that override his group permissions.</i><br>';
 		}else{
-			$userPermissionsNote='<br /><i>This user inherits the permissions of his group.</i><br />';
+			$userPermissionsNote='<br><i>This user inherits the <a href="pageEditGroup.php?groupID=' . $groupID . '">permissions of his group</a>.</i><br>';
 		}
 		$userPermissionsNote.='<input type="button" class="" value="Set special permissions for this user" onClick="if(confirm(\'If you made any changes to this member and did not save them yet, they will be lost if you continue. Are you sure you want to continue?\')){ window.location=\'pageEditMemberPermissions.php?memberID='.urlencode($memberID).'\'; }">';
 	}else{
 		$userPermissionsNote='';
 	}
 ?>
-<h1><?php echo ($memberID ? "Edit Member '$memberID'" : "Add New Member".$addend); ?></h1>
+<div class="page-header"><h1><?php echo ($memberID ? "Edit Member '$memberID'" : "Add New Member".$addend); ?></h1></div>
 <?php if($anonMemberID==$memberID){ ?>
-	<div class="status">Attention! This is the anonymous (guest) member.</div>
+	<div class="alert alert-warning">Attention! This is the anonymous (guest) member.</div>
 <?php }elseif($memberID==strtolower($adminConfig['adminUsername'])){ ?>
-	<div class="status">Attention! This is the admin member. You can't change the username, password or email of this member here, but you can do so in the <a href="pageSettings.php">admin settings</a> page.</div>
+	<div class="alert alert-warning">Attention! This is the admin member. You can't change the username, password or email of this member here, but you can do so in the <a href="pageSettings.php">admin settings</a> page.</div>
 <?php } ?>
-<form method="post" action="pageEditMember.php" onSubmit="return jsValidateMember();">
+<form method="post" action="pageEditMember.php" onSubmit="return jsValidateMember();" autocomplete="off">
 	<input type="hidden" name="oldMemberID" value="<?php echo ($memberID ? $memberID : ""); ?>">
-	<table border="0" cellspacing="0" cellpadding="0">
+	<div class="table-responsive"><table class="table table-striped">
 	<?php if($memberID!=strtolower($adminConfig['adminUsername'])){ ?>
 		<tr>
 			<td align="right" class="tdFormCaption" valign="top">
@@ -134,7 +140,7 @@
 				<input type="text" name="memberID" <?php echo ($anonMemberID==$memberID ? "readonly" : "");?> id="memberID" value="<?php echo $memberID; ?>" size="20" class="formTextBox">
 				<?php echo ($memberID ? "" : "<input type=\"button\" value=\"Check availability\" onClick=\"window.open('../checkMemberID.php?memberID='+document.getElementById('memberID').value, 'checkMember', 'innerHeight=100,innerWidth=400,dependent=yes,screenX=200,screenY=200,status=no');\">"); ?>
 				<?php if($anonMemberID==$memberID){ ?>
-				<br />The username of the guest member is read-only.
+				<br>The username of the guest member is read-only.
 				<?php } ?>
 				</td>
 			</tr>
@@ -144,8 +150,8 @@
 				<div class="formFieldCaption">Password</div>
 				</td>
 			<td align="left" class="tdFormInput">
-				<input type="password" name="password" id="password" value="" size="20" class="formTextBox">
-				<?php echo ($memberID ? "<br />Type a password only if you want to change this member's<br />password. Otherwise, leave this field empty." : ""); ?>
+				<input type="password" name="password" id="password" value="" size="20" class="formTextBox" autocomplete="off">
+				<?php echo ($memberID ? "<br>Type a password only if you want to change this member's<br>password. Otherwise, leave this field empty." : ""); ?>
 				</td>
 			</tr>
 		<tr>
@@ -153,7 +159,7 @@
 				<div class="formFieldCaption">Confirm password</div>
 				</td>
 			<td align="left" class="tdFormInput">
-				<input type="password" name="confirmPassword" id="confirmPassword" value="" size="20" class="formTextBox">
+				<input type="password" name="confirmPassword" id="confirmPassword" value="" size="20" class="formTextBox" autocomplete="off">
 				</td>
 			</tr>
 		<tr>
@@ -253,7 +259,7 @@
 				<input type="submit" name="saveChanges" value="Save changes">
 				</td>
 			</tr>
-		</table>
+		</table></div>
 	</form>
 
 

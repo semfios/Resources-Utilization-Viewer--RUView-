@@ -11,9 +11,9 @@
 		}
 
 		// set up tables
-		setupTable('resources', "create table if not exists `resources` ( `Id` INT unsigned not null auto_increment , primary key (`Id`), `Name` VARCHAR(40) , `Available` VARCHAR(40) default '1' ) CHARSET latin1", $silent);
-		setupTable('projects', "create table if not exists `projects` ( `Id` INT unsigned not null auto_increment , primary key (`Id`), `Name` VARCHAR(40) , `StartDate` DATE , `EndDate` DATE ) CHARSET latin1", $silent);
-		setupTable('assignments', "create table if not exists `assignments` ( `Id` INT unsigned not null auto_increment , primary key (`Id`), `ProjectId` INT unsigned , `ProjectDuration` INT unsigned , `ResourceId` INT unsigned , `Commitment` FLOAT(3,2) not null default '1.00' , `StartDate` DATE , `EndDate` DATE ) CHARSET latin1", $silent);
+		setupTable('resources', "create table if not exists `resources` (   `Id` INT unsigned not null auto_increment , primary key (`Id`), `Name` VARCHAR(40) , `Available` VARCHAR(40) default '1' ) CHARSET utf8", $silent, array( "ALTER TABLE `resources` CONVERT TO CHARACTER SET utf8"));
+		setupTable('projects', "create table if not exists `projects` (   `Id` INT unsigned not null auto_increment , primary key (`Id`), `Name` VARCHAR(40) , `StartDate` DATE , `EndDate` DATE ) CHARSET utf8", $silent, array( "ALTER TABLE `projects` CONVERT TO CHARACTER SET utf8"));
+		setupTable('assignments', "create table if not exists `assignments` (   `Id` INT unsigned not null auto_increment , primary key (`Id`), `ProjectId` INT unsigned , `ProjectDuration` INT unsigned , `ResourceId` INT unsigned , `Commitment` FLOAT(3,2) not null default '1.00' , `StartDate` DATE , `EndDate` DATE ) CHARSET utf8", $silent, array( "ALTER TABLE `assignments` CONVERT TO CHARACTER SET utf8"));
 		setupIndexes('assignments', array('ProjectId','ResourceId'));
 
 
@@ -31,14 +31,14 @@
 		}
 
 		foreach($arrFields as $fieldName){
-			if(!$res=@mysql_query("SHOW COLUMNS FROM `$tableName` like '$fieldName'")){
+			if(!$res=@db_query("SHOW COLUMNS FROM `$tableName` like '$fieldName'")){
 				continue;
 			}
-			if(!$row=@mysql_fetch_assoc($res)){
+			if(!$row=@db_fetch_assoc($res)){
 				continue;
 			}
 			if($row['Key']==''){
-				@mysql_query("ALTER TABLE `$tableName` ADD INDEX `$fieldName` (`$fieldName`)");
+				@db_query("ALTER TABLE `$tableName` ADD INDEX `$fieldName` (`$fieldName`)");
 			}
 		}
 	}
@@ -48,7 +48,7 @@
 		global $Translation;
 		ob_start();
 
-		echo "<div style=\"padding: 5px; border-bottom:solid 1px silver; font-family: verdana, arial; font-size: 10px;\">";
+		echo '<div style="padding: 5px; border-bottom:solid 1px silver; font-family: verdana, arial; font-size: 10px;">';
 
 		// is there a table rename query?
 		if(is_array($arrAlter)){
@@ -58,19 +58,19 @@
 			}
 		}
 
-		if($res=@mysql_query("select count(1) from `$tableName`")){ // table already exists
-			if($row=@mysql_fetch_array($res)){
+		if($res=@db_query("select count(1) from `$tableName`")){ // table already exists
+			if($row = @db_fetch_array($res)){
 				echo str_replace("<TableName>", $tableName, str_replace("<NumRecords>", $row[0],$Translation["table exists"]));
 				if(is_array($arrAlter)){
-					echo '<br />';
+					echo '<br>';
 					foreach($arrAlter as $alter){
 						if($alter!=''){
 							echo "$alter ... ";
-							if(!@mysql_query($alter)){
-								echo "<font color=red>".$Translation["failed"]."</font><br />";
-								echo "<font color=red>".$Translation["mysql said"]." ".mysql_error()."</font><br />";
+							if(!@db_query($alter)){
+								echo '<span class="label label-danger">' . $Translation['failed'] . '</span>';
+								echo '<div class="text-danger">' . $Translation['mysql said'] . ' ' . db_error(db_link()) . '</div>';
 							}else{
-								echo "<font color=green>".$Translation["ok"]."</font><br />";
+								echo '<span class="label label-success">' . $Translation['ok'] . '</span>';
 							}
 						}
 					}
@@ -83,15 +83,15 @@
 		}else{ // given tableName doesn't exist
 
 			if($oldTableName!=''){ // if we have a table rename query
-				if($ro=@mysql_query("select count(1) from `$oldTableName`")){ // if old table exists, rename it.
+				if($ro=@db_query("select count(1) from `$oldTableName`")){ // if old table exists, rename it.
 					$renameQuery=array_shift($arrAlter); // get and remove rename query
 
 					echo "$renameQuery ... ";
-					if(!@mysql_query($renameQuery)){
-						echo "<font color=red>".$Translation["failed"]."</font><br />";
-						echo "<font color=red>".$Translation["mysql said"]." ".mysql_error()."</font><br />";
+					if(!@db_query($renameQuery)){
+						echo '<span class="label label-danger">' . $Translation['failed'] . '</span>';
+						echo '<div class="text-danger">' . $Translation['mysql said'] . ' ' . db_error(db_link()) . '</div>';
 					}else{
-						echo "<font color=green>".$Translation["ok"]."</font><br />";
+						echo '<span class="label label-success">' . $Translation['ok'] . '</span>';
 					}
 
 					if(is_array($arrAlter)) setupTable($tableName, $createSQL, false, $arrAlter); // execute Alter queries on renamed table ...
@@ -100,11 +100,11 @@
 				}
 			}else{ // tableName doesn't exist and no rename, so just create the table
 				echo str_replace("<TableName>", $tableName, $Translation["creating table"]);
-				if(!@mysql_query($createSQL)){
-					echo "<font color=red>".$Translation["failed"]."</font><br />";
-					echo "<font color=red>".$Translation["mysql said"].mysql_error()."</font>";
+				if(!@db_query($createSQL)){
+					echo '<span class="label label-danger">' . $Translation['failed'] . '</span>';
+					echo '<div class="text-danger">' . $Translation['mysql said'] . db_error(db_link()) . '</div>';
 				}else{
-					echo "<font color=green>".$Translation["ok"]."</font>";
+					echo '<span class="label label-success">' . $Translation['ok'] . '</span>';
 				}
 			}
 		}

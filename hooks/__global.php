@@ -61,6 +61,10 @@
 	 *     Means the member signed up through the signup form and awaits admin approval.
 	 * 'automatic':
 	 *     Means the member signed up through the signup form and was approved automatically.
+	 * 'profile':
+	 *     Means the member made changes to his profile.
+	 * 'password':
+	 *     Means the member changed his password.
 	 * 
 	 * @param $args
 	 * An empty array that is passed by reference. It's currently not used but is reserved for future uses.
@@ -75,6 +79,12 @@
 				break;
 
 			case 'automatic':
+				break;
+
+			case 'profile':
+				break;
+
+			case 'password':
 				break;
 
 		}

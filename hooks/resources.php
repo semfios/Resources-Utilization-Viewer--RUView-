@@ -26,7 +26,7 @@
 	*/
 
 	function resources_init(&$options, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -51,7 +51,7 @@
 
 	function resources_header($contentType, $memberInfo, &$args){
 		$header='';
-	
+
 		switch($contentType){
 			case 'tableview':
 				$header='';
@@ -102,7 +102,7 @@
 
 	function resources_footer($contentType, $memberInfo, &$args){
 		$footer='';
-	
+
 		switch($contentType){
 			case 'tableview':
 				$footer='';
@@ -137,6 +137,7 @@
 	 * 
 	 * @param $data
 	 * An associative array where the keys are field names and the values are the field data values to be inserted into the new record.
+	 * Note: if a field is set as read-only or hidden in detail view, it can't be modified through $data. You should use a direct SQL statement instead.
 	 * For this table, the array items are: 
 	 *     $data['Name'], $data['Available']
 	 * $data array is passed by reference so that modifications to it apply to the insert query.
@@ -153,7 +154,7 @@
 	*/
 
 	function resources_before_insert(&$data, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -179,7 +180,7 @@
 	*/
 
 	function resources_after_insert($data, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -188,6 +189,7 @@
 	 * 
 	 * @param $data
 	 * An associative array where the keys are field names and the values are the field data values.
+	 * Note: if a field is set as read-only or hidden in detail view, it can't be modified through $data. You should use a direct SQL statement instead.
 	 * For this table, the array items are: 
 	 *     $data['Id'], $data['Name'], $data['Available']
 	 * Also includes the item $data['selectedID'] which stores the value of the primary key for the record to be updated.
@@ -205,7 +207,7 @@
 	*/
 
 	function resources_before_update(&$data, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -230,7 +232,7 @@
 	*/
 
 	function resources_after_update($data, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -256,7 +258,7 @@
 	*/
 
 	function resources_before_delete($selectedID, &$skipChecks, $memberInfo, &$args){
-	
+
 		return TRUE;
 	}
 
@@ -278,7 +280,7 @@
 	*/
 
 	function resources_after_delete($selectedID, $memberInfo, &$args){
-	
+
 	}
 
 	/**
@@ -304,7 +306,7 @@
 	*/
 
 	function resources_dv($selectedID, $memberInfo, &$html, &$args){
-	
+
 	}
 
 	/**
@@ -324,7 +326,26 @@
 	 * A string containing the query to use for fetching the CSV data. If FALSE or empty is returned, the default query is used.
 	*/
 
-	function resources_csv($query, $memberInfo, $args){
-	
+	function resources_csv($query, $memberInfo, &$args){
+
 		return $query;
+	}
+	/**
+	 * Called when displaying the table view to retrieve custom record actions
+	 * 
+	 * @return
+	 * A 2D array describing custom record actions. The format of the array is:
+	 *   array(
+	 *      array(
+	 *         'title' => 'Title', // the title/label of the custom action as displayed to users
+	 *         'function' => 'js_function_name', // the name of a javascript function to be executed when user selects this action
+	 *         'class' => 'CSS class(es) to apply to the action title', // optional, refer to Bootstrap documentation for CSS classes
+	 *         'icon' => 'icon name' // optional, refer to Bootstrap glyphicons for supported names
+	 *      ), ...
+	 *   )
+	*/
+
+	function resources_batch_actions(&$args){
+
+		return array();
 	}
